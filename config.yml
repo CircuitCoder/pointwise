@@ -1,4 +1,0 @@
-fonts:
-  test: ./fonts/SourceHanSerifCN-Regular.otf
-
-bind: unix:./http.sock

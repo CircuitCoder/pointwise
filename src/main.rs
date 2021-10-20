@@ -55,6 +55,7 @@ async fn main(args: Args) -> anyhow::Result<()> {
             match config.bind.host() {
                 Some(Host::Ipv4(ip)) => server.bind((ip, port)),
                 Some(Host::Ipv6(ip)) => server.bind((ip, port)),
+                Some(Host::Domain(domain)) => server.bind((domain, port)),
                 _ => return Err(anyhow::anyhow!("TCP listen should be in form of IP[:port]")),
             }
         }
