@@ -1,14 +1,14 @@
 mod config;
 mod web;
 
-use std::path::PathBuf;
-use std::fs::File;
 use std::collections::HashMap;
+use std::fs::File;
+use std::path::PathBuf;
 
 use actix_web::{App, HttpServer};
+use std::io::Read;
 use structopt::StructOpt;
 use url::Host;
-use std::io::Read;
 
 #[derive(StructOpt)]
 struct Args {
@@ -38,10 +38,14 @@ async fn main(args: Args) -> anyhow::Result<()> {
         fonts.insert(name, font);
     }
 
-    let server = HttpServer::new(|| {
+    let state = actix_web::web::Data::new(web::State::new(fonts));
+
+    let server = HttpServer::new(move || {
         App::new()
+            .app_data(state.clone())
             .wrap(actix_web::middleware::Logger::default())
-            .service(web::render).service(web::list)
+            .service(web::render)
+            .service(web::list)
     });
 
     let server = match config.bind.scheme() {

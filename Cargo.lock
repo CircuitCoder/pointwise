@@ -617,6 +617,7 @@ dependencies = [
  "log",
  "paw",
  "serde",
+ "serde_json",
  "serde_yaml",
  "structopt",
  "ttf-parser",
