@@ -1,0 +1,105 @@
+@import './fonts.scss';
+
+.post {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  padding: 300px 40px 40px 40px;
+  transition: opacity 2s ease, transform 2s ease;
+
+  &-hidden {
+    transform: translateY(70vh);
+    opacity: 0;
+  }
+}
+
+.post-inner {
+  box-sizing: border-box;
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  box-shadow: rgba(0,0,0,.3) 0 4px 12px;
+}
+
+.post-meta {
+  height: 100px;
+  background: #EEE;
+  display: flex;
+  align-items: center;
+
+  &-icon {
+    width: 80px;
+    height: 100%;
+    clip-path: polygon(20px 0, 100% 0, calc(100% - 20px) 100%, 0 100%);
+    background: rgba(0,0,0,.1);
+    margin: 0 20px 0 40px;
+
+    .material-icons {
+      font-size: 100px;
+      line-height: 100px;
+      color: #EEE;
+    }
+  }
+}
+
+.post-author {
+  img {
+    width: 100px;
+    height: 100px;
+  }
+  display: inline-flex;
+  align-items: center;
+
+  &-img-mask {
+    width: 30px;
+    height: 100px;
+    margin-left: -30px;
+    margin-right: 10px;
+    backdrop-filter: grayscale(.7);
+    background-image: linear-gradient(
+      to bottom right,
+      change-color(#EEE, $alpha: .2),
+      change-color(#EEE, $alpha: 1)
+    );
+    clip-path: polygon(20px 0, 0 100%, 100% 100%, 100% 0);
+  }
+
+  &-name {
+    color: rgba(0,0,0,.87);
+    font-size: 22px;
+    font-weight: 400;
+  }
+
+  &-tool {
+    color: rgba(0,0,0,.54);
+    font-size: 14px;
+  }
+}
+
+.post-time {
+  @include monospace;
+  &-date {
+    color: rgba(0,0,0,.87);
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  &-time {
+    color: rgba(0,0,0,.87);
+    font-size: 14px;
+    font-weight: 200;
+  }
+
+  &-tool {
+    color: rgba(0,0,0,.54);
+    font-size: 14px;
+    font-weight: 200;
+  }
+}
+
+.post-content {
+  padding: 40px 60px;
+}

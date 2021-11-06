@@ -24,7 +24,7 @@
   filter: drop-shadow(0 4px 12px rgba(0,0,0,.6));
   transition: filter 2s ease;
 
-  svg {
+  g {
     transform: scale(var(--optical-scale));
     transform-origin: 0 0;
 
@@ -43,10 +43,7 @@
   width: 100%;
   height: 100%;
 
-  &-floating {
-    transform: translate(var(--dx), var(--dy));
-    transition: transform .12s ease-out;
-  }
+  transform: translate(calc(var(--dx) * var(--deriv)), calc(var(--dy) * var(--deriv)));
 }
 
 .title-char:hover .title-component {
@@ -54,9 +51,8 @@
 }
 
 .title-centered {
-  position: fixed;
-  top: 200px;
-  left: 50%;
+  y: 50vh;
+  x: 50vw;
 }
 
 #title-root {
@@ -68,18 +64,53 @@
   pointer-events: none;
 }
 
-svg path {
+path {
   transition: fill-opacity .5s ease, stroke-opacity .5s ease;
 }
 
-.title-loading {
-  svg path {
+.title-char-loading {
+  path {
     fill-opacity: 0.1;
     stroke-opacity: 1;
   }
+
+  /*
+  .title-component {
+    --deriv: 1;
+    // filter: drop-shadow(0 4px 12px rgba(0,0,0,.6)) blur(2px);
+  }
+  */
 }
 
-.title-char:first-child .title-component:first-child svg path {
+.title-char:first-child .title-component:first-child path {
   fill: red;
   stroke: red;
+}
+
+#title-global {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+.title-loading-bg {
+  &-start {
+    stop-color: #FFF3B0;
+  }
+
+  &-end {
+    stop-color: #CA26FF;
+  }
+
+  &-render {
+    x: 0px;
+    y: 0px;
+    width: 100vw;
+    height: 100vh;
+  }
 }

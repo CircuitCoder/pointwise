@@ -27,3 +27,9 @@
   inherits: false;
   initial-value: 0px;
 }
+
+@property --deriv {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}

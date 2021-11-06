@@ -1,14 +1,25 @@
+@import './fonts.scss';
 @import './prop.css';
 @import './title.scss';
+@import './post.scss';
+@import './list.scss';
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  @include sans;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
   overflow: hidden;
+  background: #F9F9F9;
+  /*
+  background: linear-gradient(
+    45degtr
+    rgb(6, 236, 167),
+    rgb(247, 171, 109)
+  );
+  */
 }
 
 code {
@@ -19,4 +30,8 @@ code {
 .app {
   height: 100vh;
   width: 100vw;
+}
+
+.spring {
+  flex: 1;
 }

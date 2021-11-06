@@ -3,11 +3,11 @@ import { Spec, fetchTextSpec, PathGroup, BBox, CharSpec } from './font';
 
 const STATIC_VARIATION_RATIO = 0.05;
 const STATIC_SCALE_DERIV = 0.2;
-const BLOWUP_RESAMPLE_INTERVAL = 100;
-const BLOWUP_INIT_SPEED = 1;
-const BLOWUP_DELTA_SPEED = 1e-3;
-const BLOWUP_REVERSE_FACTOR = 2e-6;
-const BLOWUP_DAMPING = 1e-3;
+const BLOWUP_MEAN_RADIUS = 100;
+const BLOWUP_MEAN_PERIOD = 2000;
+const BLOWUP_PERIOD_DERIV = 200;
+const BLOWUP_RANGE_RATIO = 0.7;
+const SETTLE_INTERVAL = 200;
 
 export enum State {
   Anchored = 'Anchored',
@@ -16,7 +16,7 @@ export enum State {
 };
 
 type CharState = {
-  elem: HTMLDivElement,
+  def: SVGGElement,
   spec: CharSpec,
 
   comps: CompState[],
@@ -27,21 +27,17 @@ type CharState = {
 };
 
 type CompState = {
-  elem: HTMLDivElement,
-
-  vx: number, // Per mills
-  vy: number, // Per mills
-
-  dx: number,
-  dy: number,
+  def: SVGGElement,
 }
 
 export class Title {
   id: string;
   text: string;
   spec: Spec | null;
-  elem: HTMLDivElement | null;
+  def: SVGGElement | null;
   chars: CharState[] | null;
+
+  global: SVGUseElement;
 
   state: State;
   width: number;
@@ -50,33 +46,38 @@ export class Title {
     this.id = id;
     this.text = text;
     this.spec = null;
-    this.elem = null;
+    this.def = null;
     this.chars = null;
     this.state = State.Anchored;
     this.width = 0;
+
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', `#title-def-${this.id}`);
+    this.global = use;
+
+    const root = document.getElementById('title-global');
+    if(root) root.append(use);
   }
 
   async fetchSpec() {
     this.spec = await fetchTextSpec(this.text)
     this.inst();
     this.layout();
-    this.animate(0);
+    this.animate(this.global, 0);
   }
 
-  changeState(state: State) {
+  changeState(state: State, external?: SVGUseElement | null): Promise<void> {
+    const base = (this.state === State.Loading ? this.global : external) ?? this.global;
     this.state = state;
     this.layout();
-    this.animate();
+    return this.animate(base);
   }
 
   layout() {
-    if(!this.spec || !this.chars || !this.elem) return;
+    if(!this.spec || !this.chars || !this.def) return;
 
-    // TODO: layout group
-
-    // TODO: change based on state
     let x = 0;
-    let y = 32;
+    let y = this.state === State.Anchored ? 32 : 0;
 
     // Layout chars
     for(const char of this.chars) {
@@ -110,11 +111,14 @@ export class Title {
     this.width = x;
   }
 
-  animate(duration: number = 1000) {
-    if(!this.chars || !this.spec || !this.elem) return;
+  animate(base: SVGUseElement, duration: number = 1000): Promise<void> {
+    if(!this.chars || !this.spec || !this.def || !this.global) return Promise.reject();
 
-    for(const { x, y, size, elem } of this.chars) {
-      elem.animate([
+    // Display state
+    this.global.style.display = this.state === State.Anchored ? 'none' : 'inline-block';
+
+    for(const { x, y, size, def } of this.chars) {
+      def.animate([
         {},
         {
           '--optical-scale': size / this.spec.units_per_em,
@@ -128,16 +132,18 @@ export class Title {
       });
     }
 
-    if(this.state === State.Centered || this.state === State.Loading) {
-      const { left, top } = this.elem.getBoundingClientRect();
+    if(this.state === State.Loading) {
+      // TODO: anchored?
+      const { left, top } = base.getBoundingClientRect();
       const vw = window.innerWidth; // TODO: change to container
+      const vh = window.innerHeight; // TODO: change to container
 
       // TODO: configurable top location
-      this.elem.animate([
+      this.def.animate([
         {
-          transform: `translate(${left - vw / 2}px, ${top - 200}px)`,
+          transform: `translate(${left - vw / 2}px, ${top - vh / 2}px)`,
         }, {
-          transform: `translate(-50%, 0)`,
+          transform: `translate(-${this.width/2}px, 0)`,
         }
       ], {
         duration,
@@ -145,82 +151,135 @@ export class Title {
         easing: 'cubic-bezier(.35,0,.25,1)',
       });
 
-      this.elem.classList.add('title-centered');
-      this.elem.classList.remove('title-anchored');
-    } else {
-      this.elem.classList.add('title-anchored');
-      this.elem.classList.remove('title-centered');
+      this.global.classList.add('title-centered');
+      this.global.classList.remove('title-anchored');
+    } else if(this.state === State.Anchored) {
+      this.global.classList.add('title-anchored');
+      this.global.classList.remove('title-centered');
     }
 
+    let ret: Promise<void>;
     if(this.state === State.Loading) {
-      this.elem.classList.add('title-loading');
-      this.blowup();
-    } else this.elem.classList.remove('title-loading');
+      this.def.classList.add('title-loading');
+      for(const { def } of this.chars) def.classList.add('title-char-loading');
+      ret = this.blowup();
+    } else if(this.state === State.Centered) {
+      ret = this.settle();
+    } else {
+      ret = Promise.resolve();
+    }
 
-    this.elem.style.width = `${this.width}px`;
+    this.def.style.width = `${this.width}px`;
+    return ret;
   }
 
-  blowup(dt?: number) {
-    if(!this.chars) return;
+  blowup(): Promise<void> {
+    if(!this.chars) return Promise.reject();
 
-    if(dt === undefined) {
-      // Setup
-      for(const char of this.chars)
-        for(const comp of char.comps) {
-          comp.dx = 0;
-          comp.dy = 0;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    for(const { comps, def } of this.chars) {
+      for(const comp of comps) {
+        const cx = vw * (Math.random() - 0.5) * BLOWUP_RANGE_RATIO;
+        const cy = vh * (Math.random() - 0.5) * BLOWUP_RANGE_RATIO;
 
-          comp.vx = (Math.random() - 0.5) * 2 * BLOWUP_INIT_SPEED;
-          comp.vy = (Math.random() - 0.5) * 2 * BLOWUP_INIT_SPEED;
+        const rx = BLOWUP_MEAN_RADIUS * Math.random() * 2;
+        const ry = BLOWUP_MEAN_RADIUS * Math.random() * 2;
 
-          comp.elem.classList.add('title-component-floating');
+        const tx = BLOWUP_MEAN_PERIOD + (Math.random() - 0.5) * 2 * BLOWUP_PERIOD_DERIV;
+        const ty = BLOWUP_MEAN_PERIOD + (Math.random() - 0.5) * 2 * BLOWUP_PERIOD_DERIV;
 
-          comp.elem.style.setProperty('--dx', `0px`);
-          comp.elem.style.setProperty('--dy', `0px`);
-        }
-    } else {
-      // Update
-      for(const char of this.chars)
-        for(const comp of char.comps) {
-          comp.dx += comp.vx * dt;
-          comp.dy += comp.vy * dt;
-          
-          const ax = (Math.random() - 0.5) * 2 * BLOWUP_DELTA_SPEED - comp.dx * BLOWUP_REVERSE_FACTOR - comp.vx * BLOWUP_DAMPING;
-          const ay = (Math.random() - 0.5) * 2 * BLOWUP_DELTA_SPEED - comp.dy * BLOWUP_REVERSE_FACTOR - comp.vy * BLOWUP_DAMPING;
-          comp.vx += ax * dt;
-          comp.vy += ay * dt;
+        const anix = comp.def.animate([
+          { '--dx': `${cx + rx}px` },
+          { '--dx': `${cx - rx}px` },
+        ], {
+          duration: tx,
+          delay: -tx * Math.random(),
+          iterations: Infinity,
+          direction: 'alternate',
+          easing: 'ease-in-out',
+        });
 
-          comp.elem.style.setProperty('--dx', `${comp.dx}px`);
-          comp.elem.style.setProperty('--dy', `${comp.dy}px`);
-        }
+        const aniy = comp.def.animate([
+          { '--dy': `${cy + ry}px` },
+          { '--dy': `${cy - ry}px` },
+        ], {
+          duration: ty,
+          delay: -ty * Math.random(),
+          iterations: Infinity,
+          direction: 'alternate',
+          easing: 'ease-in-out',
+        });
+      }
+
+      def.animate([
+        {},
+        { '--deriv': '1' },
+      ], {
+        duration: 1000,
+        fill: 'forwards',
+        easing: 'cubic-bezier(.35,0,.25,1)',
+      });
     }
 
-    const now = performance.now();
-    setTimeout(() => {
-      const ts = performance.now();
-      this.blowup(ts - now);
-    }, BLOWUP_RESAMPLE_INTERVAL);
+    return Promise.resolve();
+  }
+
+  settle(): Promise<void> {
+    if(!this.def || !this.chars) return Promise.reject();
+    this.def.classList.remove('title-loading');
+
+    this.chars.forEach(({ def }, idx) => {
+      setTimeout(() => {
+        def.classList.remove('title-char-loading');
+        def.animate([
+          {},
+          { '--deriv': '0' },
+        ], {
+          duration: 1000,
+          fill: 'forwards',
+          easing: 'cubic-bezier(.35,0,.25,1)',
+        });
+      }, idx * SETTLE_INTERVAL);
+    });
+    // TODO: drop all animations, or we can do this when starting the new animation?
+
+    const delay = this.chars.length * SETTLE_INTERVAL;
+    return new Promise(resolve => {
+      setTimeout(() => {
+        this.global.animate([
+          {},
+          { transform: 'translateY(calc(200px - 50vh))' },
+        ], {
+          duration: 2000,
+          easing: 'ease',
+          fill: 'both',
+        });
+
+        resolve();
+      }, delay);
+    });
   }
 
   inst() {
-    if(this.elem) this.elem.remove();
+    if(this.def) this.def.remove();
     if(!this.spec) return;
 
-    this.elem = document.createElement('div');
+    this.def = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     let x = 0;
     let y = 32; // Initial height
     const upem = this.spec.units_per_em;
 
     this.chars = this.spec.chars.map(spec => {
-      const [elem, comps] = specToChar(spec);
+      const [def, comps] = specToChar(spec);
       return {
-        elem,
+        def,
         spec,
         x: 0,
         y: 0,
         size: 0,
-        comps: comps.map(elem => ({
-          elem,
+        comps: comps.map(def => ({
+          def,
           dx: 0,
           dy: 0,
           vx: 0,
@@ -229,22 +288,23 @@ export class Title {
       };
     });
 
-    for(const { elem } of this.chars) this.elem.appendChild(elem);
+    for(const { def } of this.chars) this.def.appendChild(def);
+    this.def.id = `title-def-${this.id}`;
 
-    const root = document.getElementById('title-root');
-    if(root) root.appendChild(this.elem);
+    const defs = document.getElementById('title-defs');
+    if(defs) defs.appendChild(this.def);
   }
 
   drop() {
-    if(this.elem) this.elem.remove();
+    if(this.def) this.def.remove();
   }
 }
 
-function specToSVG(spec: PathGroup, bbox: BBox): SVGSVGElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+function specToSVG(spec: PathGroup, bbox: BBox): SVGGElement {
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   const height = bbox.bottom - bbox.top;
-  svg.setAttribute('width', (bbox.right - bbox.left).toString());
-  svg.setAttribute('height', height.toString());
+  g.setAttribute('width', (bbox.right - bbox.left).toString());
+  g.setAttribute('height', height.toString());
 
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
@@ -268,26 +328,26 @@ function specToSVG(spec: PathGroup, bbox: BBox): SVGSVGElement {
 
   path.setAttribute('d', d);
 
-  svg.appendChild(path);
-  return svg;
+  g.appendChild(path);
+  return g;
 }
 
-function specToChar(spec: CharSpec): [HTMLDivElement, HTMLDivElement[]] {
-  const wrapper = document.createElement('div');
+function specToChar(spec: CharSpec): [SVGGElement, SVGGElement[]] {
+  const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   const comps = spec.components.map(comp => {
-    const svg = specToSVG(comp, spec.bbox)
-    const component = document.createElement('div');
+    const path = specToSVG(comp, spec.bbox)
+    const component = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     component.classList.add('title-component');
-    component.appendChild(svg);
+    component.appendChild(path);
     return component;
   });
 
   for(const comp of comps) wrapper.appendChild(comp);
 
-  const text = document.createElement('span');
-  text.innerText = spec.char;
+  // const text = document.createElement('span');
+  // text.innerText = spec.char;
 
-  wrapper.appendChild(text);
+  // wrapper.appendChild(text);
 
   wrapper.classList.add('title-char');
 
