@@ -1,4 +1,8 @@
 mod utils;
+mod font;
+mod animation;
+
+pub mod title;
 
 use wasm_bindgen::prelude::*;
 
