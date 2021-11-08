@@ -1,12 +1,17 @@
 use std::{fs::File, io::Read, path::PathBuf};
 
 use structopt::StructOpt;
+use ttf_parser::Tag;
 
 #[derive(StructOpt)]
 struct Args {
     /// Path to config file
     #[structopt(short, long)]
     font: PathBuf,
+
+    /// Variable wght
+    #[structopt(short, long)]
+    wght: Option<f32>,
 }
 
 #[paw::main]
@@ -17,7 +22,16 @@ fn main(args: Args) -> anyhow::Result<()> {
     let mut font_file = File::open(args.font)?;
     let mut font_buf = Vec::new();
     font_file.read_to_end(&mut font_buf)?;
-    let font: ttf_parser::Face = ttf_parser::Face::from_slice(font_buf.as_slice(), 0)?;
+    let mut font: ttf_parser::Face = ttf_parser::Face::from_slice(font_buf.as_slice(), 0)?;
+
+    for axis in font.variation_axes() {
+        log::debug!("{:#?}", axis);
+    }
+
+    if let Some(wght) = args.wght {
+        log::debug!("Setting {:#?} to {}", Tag::from_bytes(b"wght"), wght);
+        font.set_variation(Tag::from_bytes(b"wght"), wght).unwrap();
+    }
 
     let stdin = std::io::stdin();
     let mut input = String::new();

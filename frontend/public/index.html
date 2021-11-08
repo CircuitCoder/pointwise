@@ -30,18 +30,6 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <div id="title-root"></div>
-    <svg id="title-global" xmlns="http://www.w3.org/2000/svg">
-      <defs id="title-defs">
-        <linearGradient id="title-loading-bg">
-          <stop class="title-loading-bg-start" offset="0%" />
-          <stop class="title-loading-bg-end" offset="100%" />
-        </linearGradient>
-      </defs>
-      <mask id="title-global-mask">
-        <use href="#title-def-test" />
-      </mask>
-      <rect class="title-loading-bg-render" fill="url(#title-loading-bg)" mask="url(#title-global-mask)" />
-    </svg>
-    <canvas id="canvas-debug" style="width: 100vw; height: 100vh;"></canvas>
+    <canvas id="title-global"></canvas>
   </body>
 </html>

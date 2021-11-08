@@ -3,17 +3,37 @@ import { useCallback, useRef, useState } from 'react';
 import { State, Title } from './title';
 
 import SPEC from './test.json';
+import { LayoutedTitle } from 'pointwise-render';
 
 const Render = import('pointwise-render');
 
-export default function App(): JSX.Element {
-  const title = useRef<Title>();
-  const titleRef = useRef<SVGUseElement>(null);
+type Awaited<T> = T extends PromiseLike<infer U> ? U : T
 
-  const startup = useCallback((elem: SVGSVGElement) => {
+export default function App(): JSX.Element {
+  const title = useRef<LayoutedTitle>();
+  const titleElem = useRef<HTMLCanvasElement>();
+  const render = useRef<Awaited<typeof Render>>();
+
+  const startup = useCallback((local: HTMLCanvasElement) => {
     Render.then(r => {
-      let title = r.prepare(SPEC)
-      const canvas: HTMLCanvasElement = document.getElementById('canvas-debug') as HTMLCanvasElement;
+      render.current = r;
+
+      // TODO: move into comp
+      const t = r.prepare(SPEC);
+      title.current = t;
+      titleElem.current = local;
+
+      const localSize = local.getBoundingClientRect();
+      local.width = localSize.width;
+      local.height = localSize.height;
+
+      const localCtx = local.getContext('2d');
+      if(!localCtx) return;
+      let now = performance.now();
+      r.render(t, localCtx, now);
+
+      const canvas: HTMLCanvasElement | null = document.getElementById('title-global') as HTMLCanvasElement | null;
+      if(!canvas) return;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       const ctx = canvas.getContext('2d');
@@ -22,7 +42,7 @@ export default function App(): JSX.Element {
       const frame = () => {
         let now = performance.now();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        r.render(title, ctx, now);
+        r.render(t, ctx, now);
 
         requestAnimationFrame(frame);
       }
@@ -37,23 +57,25 @@ export default function App(): JSX.Element {
   return (
     <div className="app" onClick={() => {
       console.log('Trigger');
+      if(!title.current || !titleElem.current || !render.current) return;
       if(cur !== State.Loading) {
-        title.current?.changeState(State.Loading, titleRef.current).then(() => {
-          setTitleHidden(true);
-        });
+        const titleLoc = titleElem.current.getBoundingClientRect();
+        render.current.blowup(title.current, titleLoc.x, titleLoc.y, performance.now());
+        setTitleHidden(true);
         setCur(State.Loading);
       } else {
-        title.current?.changeState(State.Centered, titleRef.current).then(() => {
+        const delay = render.current.condense(title.current, performance.now());
+
+        // TODO: do we have any better way to do this
+        setTimeout(() => {
           setHidden(false);
-        });;
+        }, delay);
         setCur(State.Centered);
       }
     }}>
-      <svg ref={startup} className="list-title">
-        {(!titleHidden) && (
-          <use href="#title-def-test" ref={titleRef} />
-        )}
-      </svg>
+      <div className="list-entry">
+        <canvas ref={startup} className="list-title" />
+      </div>
       <div className={clsx("post", { 'post-hidden': hidden })}>
         <div className="post-inner">
           <div className="post-meta">
