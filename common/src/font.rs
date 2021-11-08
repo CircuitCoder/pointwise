@@ -19,14 +19,14 @@ pub enum OutlineCmd {
 }
 
 impl OutlineCmd {
-    pub fn within_bbox(&self, bbox: &BBox) -> OutlineCmd {
+    pub fn draw_within_bbox(&self, bbox: &BBox) -> OutlineCmd {
         match self {
-            OutlineCmd::Move(x, y) => OutlineCmd::Move(x - bbox.left, y - bbox.top),
-            OutlineCmd::Line(x, y) => OutlineCmd::Line(x - bbox.left, y - bbox.top),
+            OutlineCmd::Move(x, y) => OutlineCmd::Move(x - bbox.left, bbox.bottom - y),
+            OutlineCmd::Line(x, y) => OutlineCmd::Line(x - bbox.left, bbox.bottom - y),
             OutlineCmd::Quad { to: (tx, ty), ctrl: (cx, cy) } =>
                 OutlineCmd::Quad {
-                    to: (tx - bbox.left, ty - bbox.top),
-                    ctrl: (cx - bbox.left, cy - bbox.top),
+                    to: (tx - bbox.left, bbox.bottom - ty),
+                    ctrl: (cx - bbox.left, bbox.bottom - cy),
                 },
             OutlineCmd::Cubic {
                 to: (tx, ty),
@@ -34,9 +34,9 @@ impl OutlineCmd {
                 ctrl_second: (c2x, c2y),
             } =>
                 OutlineCmd::Cubic{
-                    to: (tx - bbox.left, ty - bbox.top),
-                    ctrl_first: (c1x - bbox.left, c1y - bbox.top),
-                    ctrl_second: (c2x - bbox.left, c2y - bbox.top),
+                    to: (tx - bbox.left, bbox.bottom - ty),
+                    ctrl_first: (c1x - bbox.left, bbox.bottom - c1y),
+                    ctrl_second: (c2x - bbox.left, bbox.bottom - c2y),
                 },
             OutlineCmd::Close => OutlineCmd::Close,
         }
@@ -45,7 +45,7 @@ impl OutlineCmd {
 
 pub type Outline = Vec<OutlineCmd>;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 pub struct BBox {
     pub top: f64,
     pub bottom: f64,
@@ -53,7 +53,17 @@ pub struct BBox {
     pub right: f64,
 }
 
-#[derive(Serialize, Deserialize)]
+impl BBox {
+    pub fn width(&self) -> f64 {
+        self.right - self.left
+    }
+
+    pub fn height(&self) -> f64 {
+        self.bottom - self.top
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct CharResp {
     pub char: char,
     pub components: Vec<Outline>,

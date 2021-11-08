@@ -2,15 +2,33 @@ import clsx from 'clsx';
 import { useCallback, useRef, useState } from 'react';
 import { State, Title } from './title';
 
+import SPEC from './test.json';
+
+const Render = import('pointwise-render');
+
 export default function App(): JSX.Element {
   const title = useRef<Title>();
   const titleRef = useRef<SVGUseElement>(null);
 
   const startup = useCallback((elem: SVGSVGElement) => {
-    if(title.current) title.current.drop();
+    Render.then(r => {
+      let title = r.prepare(SPEC)
+      const canvas: HTMLCanvasElement = document.getElementById('canvas-debug') as HTMLCanvasElement;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const ctx = canvas.getContext('2d');
+      if(!ctx) return;
 
-    title.current = new Title('test', '被记忆和普通的花所祝福');
-    title.current.fetchSpec();
+      const frame = () => {
+        let now = performance.now();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        r.render(title, ctx, now);
+
+        requestAnimationFrame(frame);
+      }
+
+      frame();
+    });
   }, []);
   const [cur, setCur] = useState(State.Anchored);
   const [titleHidden, setTitleHidden] = useState(false);

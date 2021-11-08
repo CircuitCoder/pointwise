@@ -29,10 +29,13 @@ pointwise-common = { path = "../common" }
 wee_alloc = { version = "0.4.5", optional = true }
 
 js-sys = "0.3.55"
+rand = "0.8.4"
+getrandom = { version = "*", features = ["js"] }
 
 [dependencies.web-sys]
 version = "0.3.4"
 features = [
+  'console',
   'CanvasRenderingContext2d',
   'Document',
   'Element',
