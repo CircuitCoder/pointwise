@@ -1,6 +1,5 @@
 import clsx from 'clsx';
 import { useCallback, useRef, useState } from 'react';
-import { State, Title } from './title';
 
 import SPEC from './test.json';
 import { LayoutedTitle } from 'pointwise-render';
@@ -8,6 +7,13 @@ import { LayoutedTitle } from 'pointwise-render';
 const Render = import('pointwise-render');
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T
+
+// TODO: move to rust side
+export enum State {
+  Anchored = 'Anchored',
+  Loading = 'Loading',
+  Centered = 'Centered',
+};
 
 export default function App(): JSX.Element {
   const title = useRef<LayoutedTitle>();
