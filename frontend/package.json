@@ -36,6 +36,7 @@
     ]
   },
   "devDependencies": {
+    "raw-loader": "^4.0.2",
     "wasm-loader": "^1.3.0"
   }
 }

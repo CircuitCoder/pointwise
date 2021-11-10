@@ -11,6 +11,7 @@ struct LayoutedComp {
     blowup_x: CosineTiming,
     blowup_y: CosineTiming,
     blowup_prog: CubicBezierTiming,
+    floating: CubicBezierTiming,
 }
 
 const BLOWUP_DURATION: f64 = 1000f64;
@@ -39,6 +40,7 @@ impl LayoutedComp {
             blowup_x: CosineTiming::still(0f64),
             blowup_y: CosineTiming::still(0f64),
             blowup_prog: CubicBezierTiming::still(0f64),
+            floating: CubicBezierTiming::still(0f64),
         }
     }
 
@@ -93,6 +95,17 @@ impl LayoutedComp {
             },
             time,
         );
+
+        self.floating.update(
+            CubicBezierTiming {
+                func: CUBIC_BEZIER_BLOWUP,
+                from: 0f64,
+                to: 1f64,
+                duration: CONDENSE_DURATION,
+                delay: time + delay,
+            },
+            time,
+        );
     }
 
     pub fn render_to(
@@ -100,6 +113,7 @@ impl LayoutedComp {
         ctx: &web_sys::CanvasRenderingContext2d,
         time: f64,
         char_layout: &LayoutedChar,
+        is_first: bool,
     ) -> Result<(), JsValue> {
         // TODO: eval self x y
         ctx.save();
@@ -117,9 +131,19 @@ impl LayoutedComp {
             dy / char_layout.optical_scale(time),
         )?;
 
-        ctx.set_fill_style(&JsValue::from_str("black"));
-        ctx.set_stroke_style(&JsValue::from_str("black"));
+        if is_first {
+            ctx.set_fill_style(&JsValue::from_str("red"));
+            ctx.set_stroke_style(&JsValue::from_str("red"));
+        } else {
+            ctx.set_fill_style(&JsValue::from_str("black"));
+            ctx.set_stroke_style(&JsValue::from_str("black"));
+        }
         ctx.set_line_width(10f64);
+
+        let shadow = self.floating.eval_at(time);
+        ctx.set_shadow_offset_y(4f64 * shadow);
+        ctx.set_shadow_blur(12f64 * shadow);
+        ctx.set_shadow_color("rgba(0,0,0,.6)");
 
         crate::font::path(&self.outline, &char_layout.bbox, ctx)?;
 
@@ -204,6 +228,7 @@ impl LayoutedChar {
         &self,
         ctx: &web_sys::CanvasRenderingContext2d,
         time: f64,
+        is_first: bool,
     ) -> Result<(), JsValue> {
         ctx.save();
 
@@ -212,8 +237,8 @@ impl LayoutedChar {
         let y = self.dy.eval_at(time);
 
         ctx.transform(scale, 0f64, 0f64, scale, x, y)?;
-        for comp in &self.comps {
-            comp.render_to(ctx, time, &self)?;
+        for (idx, comp) in self.comps.iter().enumerate() {
+            comp.render_to(ctx, time, &self, is_first && idx == 0)?;
         }
 
         ctx.restore();
@@ -303,8 +328,8 @@ impl LayoutedTitle {
             self.dx.eval_at(time),
             self.dy.eval_at(time),
         )?;
-        for char in &self.chars {
-            char.render_to(ctx, time)?;
+        for (idx, char) in self.chars.iter().enumerate() {
+            char.render_to(ctx, time, idx == 0)?;
             ctx.transform(1f64, 0f64, 0f64, 1f64, char.optical_width(time), 0f64)?;
         }
         ctx.restore();

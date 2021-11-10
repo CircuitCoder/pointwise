@@ -4,6 +4,8 @@ import { useCallback, useRef, useState } from 'react';
 import SPEC from './test.json';
 import { LayoutedTitle } from 'pointwise-render';
 
+import * as Shaders from './shaders';
+
 const Render = import('pointwise-render');
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T
@@ -45,10 +47,18 @@ export default function App(): JSX.Element {
       const ctx = canvas.getContext('2d');
       if(!ctx) return;
 
+      const shaded = document.getElementById('global-shaded') as HTMLCanvasElement | null;
+      if(!shaded) return;
+      shaded.width = window.innerWidth;
+      shaded.height = window.innerHeight;
+      const prog = Shaders.setup(shaded);
+
       const frame = () => {
         let now = performance.now();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         r.render(t, ctx, now);
+
+        Shaders.render(prog, canvas);
 
         requestAnimationFrame(frame);
       }
