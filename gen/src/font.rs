@@ -92,6 +92,7 @@ pub fn split_components(input: Outline) -> Vec<Outline> {
     for i in 0..loops.len() {
         for j in 0..loops.len() {
             if i == j { continue }
+            log::debug!("Testing {} contained in {}", i, j);
 
             let i_first_point = match loops[i].get(0).unwrap() {
                 OutlineCmd::Move(x, y) => (*x as f32, *y as f32),
@@ -99,12 +100,14 @@ pub fn split_components(input: Outline) -> Vec<Outline> {
             };
             let j_path = component_to_lyon_path_ev(loops[j].iter().cloned());
             // TODO: change tolerance?
-            let i_inside_j = lyon_algorithms::hit_test::hit_test_path(&i_first_point.into(), j_path, lyon_path::FillRule::NonZero, 1e-6);
+            let i_inside_j = lyon_algorithms::hit_test::hit_test_path(&i_first_point.into(), j_path, lyon_path::FillRule::EvenOdd, 1e-1);
             if i_inside_j {
                 inside[i].insert(j);
             }
         }
     }
+
+    log::debug!("Inside set: {:#?}", inside);
 
     // Build tree
     let mut processed: Vec<bool> = loops.iter().map(|_| false).collect();
@@ -127,7 +130,7 @@ pub fn split_components(input: Outline) -> Vec<Outline> {
         };
 
         for i in 0..inside.len() {
-            if inside[i].remove(&i) && inside[i].is_empty() {
+            if inside[i].remove(&selected) && inside[i].is_empty() {
                 children[selected].push(i);
                 is_root[i] = false;
             }
@@ -135,6 +138,8 @@ pub fn split_components(input: Outline) -> Vec<Outline> {
 
         processed[selected] = true;
     }
+
+    log::debug!("Direct children: {:#?}", children);
 
     let mut collected = Vec::new();
 

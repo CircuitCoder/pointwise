@@ -1,6 +1,10 @@
 .list-title {
   width: 100%;
   height: 60px;
+
+  &-hidden {
+    display: none;
+  }
 }
 
 .list-entry {

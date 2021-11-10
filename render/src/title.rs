@@ -96,9 +96,16 @@ impl LayoutedComp {
         ctx.transform(1f64, 0f64, 0f64, 1f64, dx / char_layout.optical_scale(time), dy / char_layout.optical_scale(time))?;
 
         ctx.set_fill_style(&JsValue::from_str("black"));
+        ctx.set_stroke_style(&JsValue::from_str("black"));
+        ctx.set_line_width(10f64);
+
         crate::font::path(&self.outline, &char_layout.bbox, ctx)?;
 
+        ctx.set_global_alpha((1f64 - prog) * 0.9 + 0.1);
         ctx.fill();
+
+        ctx.set_global_alpha(prog);
+        ctx.stroke();
 
         ctx.restore();
 

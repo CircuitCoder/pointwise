@@ -79,8 +79,14 @@ export default function App(): JSX.Element {
         setCur(State.Centered);
       }
     }}>
+
+      <canvas id="title-global" className={clsx({ 'title-global-hidden': cur === State.Anchored })}></canvas>
+
       <div className="list-entry">
-        <canvas ref={startup} className="list-title" />
+        <canvas
+          ref={startup}
+          className={clsx("list-title", { 'list-title-hidden': titleHidden })}
+        />
       </div>
       <div className={clsx("post", { 'post-hidden': hidden })}>
         <div className="post-inner">

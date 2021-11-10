@@ -15,5 +15,5 @@ serde_json = "1.0.68"
 structopt = { version = "0.3.23", features = ["paw"] }
 ttf-parser = { version = "0.13.2", features = ["variable-fonts"] }
 pointwise-common = { path = "../common" }
-lyon_algorithms = "0.17.6"
-lyon_path = "0.17.7"
+lyon_algorithms = { path = "../../lyon/crates/algorithms" }
+lyon_path = { path = "../../lyon/crates/path" }
