@@ -1,6 +1,9 @@
 import SHADER_BINLIFT from './color-binlift.glsl';
 import SHADER_REDUCE from './color-reduce.glsl';
 import SHADER_COVER from './cover.glsl';
+import SHADER_CIRCLE from './circle.glsl';
+
+const LEVELS = 12;
 
 type Program = {
   input: WebGLTexture,
@@ -9,13 +12,15 @@ type Program = {
   canvas: HTMLCanvasElement,
 }
 
-type Setup = (gl: WebGL2RenderingContext, prog: WebGLProgram, params: Record<string, any>) => void;
+type Setup = (gl: WebGL2RenderingContext, stage: Stage, params: Record<string, any>) => void;
 
 type Stage = {
   prog: WebGLProgram,
   fbo: WebGLFramebuffer,
   output: WebGLTexture,
   setup: Setup,
+  uniforms: Record<string, WebGLUniformLocation>,
+  final: boolean,
 }
 
 export function setup(canvas: HTMLCanvasElement): Program {
@@ -27,17 +32,23 @@ export function setup(canvas: HTMLCanvasElement): Program {
 
   const input = createTexture(gl, width, height);
 
-  const [levels, binliftStages] = buildBinliftTower(gl, input, width, height, 12);
-  const reduceStage = buildReducer(gl, levels, width, height);
+  const [vertLevels, vertBinliftStages] = buildBinliftTower(gl, input, width, height, false);
+  const vertReduceStage = buildReducer(gl, vertLevels, width, height, false);
+
+  const [hozLevels, hozBinliftStages] = buildBinliftTower(gl, vertReduceStage.output, width, height, true);
+  const hozReduceStage = buildReducer(gl, hozLevels, width, height, true);
+
+  const circleFilterStage = buildCircleFilter(gl, hozReduceStage.output, width, height);
+
   return {
     input,
-    stages: [...binliftStages, reduceStage],
+    stages: [...vertBinliftStages, vertReduceStage, ...hozBinliftStages, hozReduceStage, circleFilterStage],
     gl,
     canvas,
   };
 }
 
-export function render(prog: Program, input: HTMLCanvasElement | HTMLImageElement, patch: number = 20) {
+export function render(prog: Program, input: HTMLCanvasElement | HTMLImageElement, patch: number = 40) {
   // Update texture
   const { gl, input: texture, stages, canvas } = prog;
 
@@ -76,27 +87,23 @@ function compile(gl: WebGL2RenderingContext, src: string, shaderType = gl.FRAGME
   return shader;
 }
 
-function buildBinliftTower(gl: WebGL2RenderingContext, input: WebGLTexture, width: number, height: number, levels: number): [WebGLTexture[], Stage[]] {
+function buildBinliftTower(gl: WebGL2RenderingContext, input: WebGLTexture, width: number, height: number, horizontal: boolean): [WebGLTexture[], Stage[]] {
   const shaderBinlift = compile(gl, SHADER_BINLIFT);
 
   let last = input;
   const textures = [input];
   const stages = [];
-  for(let i = 0; i < (levels - 1); ++i) {
+  for(let i = 0; i < (LEVELS - 1); ++i) {
     const _i = i;
     const _last = last;
 
-    const output = createRenderer(gl, shaderBinlift, width, height, (gl, prog) => {
-      // TODO: profile this
-      const biasLoc = gl.getUniformLocation(prog, "bias");
-      const horizontalLoc = gl.getUniformLocation(prog, "horizontal");
-      const sizeLoc = gl.getUniformLocation(prog, "size");
-
-      gl.uniform1i(biasLoc, 1 << _i);
-      gl.uniform1i(horizontalLoc, 0);
-      gl.uniform2f(sizeLoc, width, height);
+    const output = createRenderer(gl, shaderBinlift, width, height, (gl, stage) => {
+      gl.uniform1i(stage.uniforms.bias, 1 << _i);
+      gl.uniform1i(stage.uniforms.horizontal, horizontal ? 0 : 1);
+      gl.uniform2f(stage.uniforms.size, width, height);
 
       attachTexture(gl, _last, 0)
+      gl.uniform1i(stage.uniforms.last, 0);
     });
 
     last = output.output;
@@ -108,24 +115,38 @@ function buildBinliftTower(gl: WebGL2RenderingContext, input: WebGLTexture, widt
   return [textures, stages];
 }
 
-function buildReducer(gl: WebGL2RenderingContext, levels: WebGLTexture[], width: number, height: number): Stage {
-  if(levels.length !== 12) throw new Error('Currently only supports 12 levels');
+function buildReducer(gl: WebGL2RenderingContext, levels: WebGLTexture[], width: number, height: number, horizontal: boolean): Stage {
+  if(levels.length !== LEVELS) throw new Error('Currently only supports ${LEVELS} levels');
   const shaderReduce = compile(gl, SHADER_REDUCE);
-  return createRenderer(gl, shaderReduce, width, height, (gl, prog, { patch = 20 }) => {
-    // TODO: profile this
-    const enablesLoc = gl.getUniformLocation(prog, "enables");
-    const horizontalLoc = gl.getUniformLocation(prog, "horizontal");
-    const sizeLoc = gl.getUniformLocation(prog, "size");
+  return createRenderer(gl, shaderReduce, width, height, (gl, stage, { patch }) => {
+    const bin = binrepr(patch, LEVELS);
+    gl.uniform1iv(stage.uniforms['enables[0]'], Uint32Array.from(bin));
+    gl.uniform1i(stage.uniforms.horizontal, horizontal ? 0 : 1)
+    gl.uniform2f(stage.uniforms.size, width, height);
 
-    gl.uniform1iv(enablesLoc, binrepr(patch, 12), 0, 12);
-    gl.uniform1i(horizontalLoc, 0);
-    gl.uniform2f(sizeLoc, width, height);
-
-    // Debug: unset frame buffer
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    for(let i = 0; i < 12; ++i) attachTexture(gl, levels[i], i);
+    for(let i = 0; i < LEVELS; ++i) {
+      attachTexture(gl, levels[i], i);
+      gl.uniform1i(stage.uniforms[`level_${i}`], i);
+    }
   });
+}
+
+function buildCircleFilter(gl: WebGL2RenderingContext, avg: WebGLTexture, width: number, height: number): Stage {
+  const shaderCircle = compile(gl, SHADER_CIRCLE);
+  return createRenderer(
+    gl,
+    shaderCircle,
+    width,
+    height,
+    (gl, stage, { patch }) => {
+      gl.uniform2f(stage.uniforms.ksize, patch, patch);
+      gl.uniform2f(stage.uniforms.size, width, height);
+
+      attachTexture(gl, avg, 0)
+      gl.uniform1i(stage.uniforms.avg, 0);
+    },
+    true,
+  );
 }
 
 function createTexture(gl: WebGL2RenderingContext, width: number, height: number): WebGLTexture {
@@ -159,6 +180,7 @@ function createRenderer(
   width: number,
   height: number,
   setup: Setup,
+  final = false,
 ): Stage {
   const prog = gl.createProgram();
   if(!prog) throw new Error('Unable to create WebGL program');
@@ -169,6 +191,7 @@ function createRenderer(
   gl.linkProgram(prog);
 
   console.log("Program linkage: ", gl.getProgramInfoLog(prog));
+  if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error('WebGL Program linking failure');
 
   const output = createTexture(gl, width, height);
   const fbo = gl.createFramebuffer();
@@ -191,14 +214,17 @@ function createRenderer(
     fbo,
     output,
     setup,
+    uniforms: getUniforms(gl, prog),
+    final,
   };
 }
 
 function renderStage(gl: WebGL2RenderingContext, stage: Stage, width: number, height: number, params: Record<string, any> = {}) {
   gl.useProgram(stage.prog);
   gl.viewport(0, 0, width, height);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, stage.fbo);
-  stage.setup(gl, stage.prog, params);
+  if(!stage.final) gl.bindFramebuffer(gl.FRAMEBUFFER, stage.fbo);
+  else gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  stage.setup(gl, stage, params);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 
@@ -216,4 +242,18 @@ function binrepr(input: number, length: number): number[] {
   }
 
   return output;
+}
+
+function getUniforms(gl: WebGL2RenderingContext, prog: WebGLProgram): Record<string, WebGLUniformLocation> {
+  const result: Record<string, WebGLUniformLocation> = {};
+  const cnt: number = gl.getProgramParameter(prog, gl.ACTIVE_UNIFORMS);
+  for(let i = 0; i < cnt; i++) {
+    const uniform = gl.getActiveUniform(prog, i);
+    console.log(uniform);
+    if(uniform === null) throw new Error(`Unable to find uniform ${i}`);
+    const loc = gl.getUniformLocation(prog, uniform.name);
+    if(loc === null) throw new Error(`Unable to find uniform location for ${uniform.name}`);
+    result[uniform.name] = loc;
+  }
+  return result;
 }

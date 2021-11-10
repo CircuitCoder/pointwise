@@ -12,14 +12,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 
   overflow: hidden;
-  background: #F9F9F9;
-  /*
-  background: linear-gradient(
-    45degtr
-    rgb(6, 236, 167),
-    rgb(247, 171, 109)
+  background-image: linear-gradient(
+    45deg,
+    change-color(#FFF6B7, $alpha: .5) 10%,
+    change-color(#F6416C, $alpha: .5) 100%
   );
-  */
 }
 
 code {

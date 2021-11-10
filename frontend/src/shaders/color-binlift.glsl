@@ -11,7 +11,7 @@ uniform vec2 size;
 
 vec4 colorWeightedSum(vec4 a, vec4 b) {
   float sum = a[3] + b[3];
-  if(sum < 1e-6) return vec4(0, 0, 0, 0);
+  if(sum < 1e-4) return vec4(0, 0, 0, 0);
   return vec4(
     (a[0] * a[3] + b[0] * b[3]) / sum,
     (a[1] * a[3] + b[1] * b[3]) / sum,

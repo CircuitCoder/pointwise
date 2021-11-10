@@ -47,7 +47,7 @@ export default function App(): JSX.Element {
       const ctx = canvas.getContext('2d');
       if(!ctx) return;
 
-      const shaded = document.getElementById('global-shaded') as HTMLCanvasElement | null;
+      const shaded = document.getElementById('title-global-shaded') as HTMLCanvasElement | null;
       if(!shaded) return;
       shaded.width = window.innerWidth;
       shaded.height = window.innerHeight;
@@ -90,7 +90,21 @@ export default function App(): JSX.Element {
       }
     }}>
 
-      <canvas id="title-global" className={clsx({ 'title-global-hidden': cur === State.Anchored })}></canvas>
+      <div className={clsx(
+        'title-global-backdrop',
+        {
+          'title-global-backdrop-shown': cur === State.Loading,
+        }
+      )} />
+      <canvas id="title-global-shaded" className={clsx({
+        'title-global-shaded-shown': cur !== State.Anchored,
+        'title-global-shaded-hidden': !hidden,
+        'title-global-shaded-dimmed': cur === State.Centered,
+      })}></canvas>
+      <canvas id="title-global" className={clsx({
+        'title-global-hidden': cur === State.Anchored,
+        'title-global-clipped': cur === State.Loading,
+      })}></canvas>
 
       <div className="list-entry">
         <canvas

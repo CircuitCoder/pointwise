@@ -1,3 +1,5 @@
+$shade-diag-dist: 200px;
+
 .title-char {
   position: absolute;
   top: 0;
@@ -96,6 +98,17 @@ path {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
+
+  &.title-global-hidden {
+    opacity: 0;
+  }
+
+  clip-path: polygon(0 0, calc(100% + #{$shade-diag-dist}) 0, 100% 100%, 0 100%);
+  transition: clip-path 1s ease;
+
+  &.title-global-clipped {
+    clip-path: polygon(-#{$shade-diag-dist} 0, 0 0, -#{$shade-diag-dist} 100%, -#{$shade-diag-dist} 100%);
+  }
 }
 
 .title-loading-bg {
@@ -115,15 +128,57 @@ path {
   }
 }
 
-.title-global-hidden {
-  display: none;
-}
-
-#global-shaded {
+#title-global-shaded {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   pointer-events: none;
+
+  transform: scaleY(-1);
+
+  clip-path: polygon(
+    100% 0,
+    calc(100% + #{$shade-diag-dist}) 0,
+    calc(100% + #{$shade-diag-dist}) 100%,
+    calc(100% + #{$shade-diag-dist}) 100%
+  );
+
+  &.title-global-shaded-shown {
+    clip-path: polygon(
+      -#{$shade-diag-dist} 0,
+      100% 0,
+      100% 100%,
+      0 100%
+    );
+    transition: clip-path 1s ease;
+  }
+
+  &.title-global-shaded-dimmed {
+    opacity: 0.2;
+    transition: opacity 2s ease;
+  }
+
+  &.title-global-shaded-hidden {
+    opacity: 0;
+    transition: opacity 2s ease;
+  }
+}
+
+.title-global-backdrop {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+
+  backdrop-filter: grayscale(1);
+  clip-path: polygon(calc(100% + #{$shade-diag-dist}) 0, calc(100% + #{$shade-diag-dist}) 0, calc(100% + #{$shade-diag-dist}) 100%, 100% 100%);
+  transition: clip-path 1s ease;
+
+  &-shown {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, -#{$shade-diag-dist} 100%);
+  }
 }
