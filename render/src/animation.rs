@@ -2,7 +2,10 @@ use wasm_bindgen::JsValue;
 
 pub trait Timing {
     fn eval_at(&self, time: f64) -> f64;
-    fn update(&mut self, new: Self, now: f64) where Self: Sized {
+    fn update(&mut self, new: Self, now: f64)
+    where
+        Self: Sized,
+    {
         *self = new;
     }
 }
@@ -87,8 +90,12 @@ pub struct CubicBezierFunc {
 
 impl CubicBezierFunc {
     fn eval(&self, at: f64) -> f64 {
-        if at <= 0f64 { return 0f64; }
-        if at >= 1f64 { return 1f64; }
+        if at <= 0f64 {
+            return 0f64;
+        }
+        if at >= 1f64 {
+            return 1f64;
+        }
 
         // Solve x -> t
         // Polynomial: x = 3(1-t)^2t x_1 + 3(1-t)t^2 x_2 + t^3
@@ -99,9 +106,14 @@ impl CubicBezierFunc {
 
         let mut t = at;
         loop {
-            let f = (1f64 + 3f64 * self.x1 - 3f64 * self.x2) * t * t * t + (-6f64 * self.x1 + 3f64 * self.x2) * t * t + 3f64 * self.x1 * t - at;
-            let df = (1f64 + 3f64 * self.x1 - 3f64 * self.x2) * t * t * 3f64 + (-6f64 * self.x1 + 3f64 * self.x2) * t * 2f64 + 3f64 * self.x1;
-            let dt = - f / df;
+            let f = (1f64 + 3f64 * self.x1 - 3f64 * self.x2) * t * t * t
+                + (-6f64 * self.x1 + 3f64 * self.x2) * t * t
+                + 3f64 * self.x1 * t
+                - at;
+            let df = (1f64 + 3f64 * self.x1 - 3f64 * self.x2) * t * t * 3f64
+                + (-6f64 * self.x1 + 3f64 * self.x2) * t * 2f64
+                + 3f64 * self.x1;
+            let dt = -f / df;
             t += dt;
 
             // web_sys::console::log_1(&JsValue::from_str(&format!("Current solving at: {}", t)));
@@ -111,7 +123,9 @@ impl CubicBezierFunc {
             }
         }
 
-        3f64 * (1f64 - t) * (1f64 - t) * t * self.y1 + 3f64 * (1f64 - t) * t * t * self.y2 + t * t * t
+        3f64 * (1f64 - t) * (1f64 - t) * t * self.y1
+            + 3f64 * (1f64 - t) * t * t * self.y2
+            + t * t * t
     }
 }
 

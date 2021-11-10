@@ -1,8 +1,8 @@
-use wasm_bindgen::prelude::*;
-use pointwise_common::font::{BBox, CharResp, Outline};
-use web_sys::{CanvasRenderingContext2d, window};
 use crate::animation::*;
-use rand::{Rng, distributions::Uniform, prelude::Distribution};
+use pointwise_common::font::{BBox, CharResp, Outline};
+use rand::{distributions::Uniform, prelude::Distribution, Rng};
+use wasm_bindgen::prelude::*;
+use web_sys::{window, CanvasRenderingContext2d};
 
 #[wasm_bindgen]
 struct LayoutedComp {
@@ -45,47 +45,62 @@ impl LayoutedComp {
     pub fn blowup<R: Rng>(&mut self, rng: &mut R, vw: f64, vh: f64, time: f64) {
         let blowup_center_gen: Uniform<f64> = Uniform::from(-0.35f64..0.35f64);
         let blowup_omega_gen: Uniform<f64> = Uniform::from(
-            (std::f64::consts::PI * 2f64 / 4200f64)
-            ..
-            (std::f64::consts::PI * 2f64 / 3800f64)
+            (std::f64::consts::PI * 2f64 / 4200f64)..(std::f64::consts::PI * 2f64 / 3800f64),
         );
         let blowup_radius_gen: Uniform<f64> = Uniform::from(20f64..200f64);
         let blowup_phase_gen: Uniform<f64> = Uniform::from(0f64..(std::f64::consts::PI * 2f64));
 
-        self.blowup_x.update(CosineTiming {
-            omega: blowup_omega_gen.sample(rng),
-            phase: blowup_phase_gen.sample(rng),
-            amp: blowup_radius_gen.sample(rng),
-            offset: vw * blowup_center_gen.sample(rng),
-        }, time);
+        self.blowup_x.update(
+            CosineTiming {
+                omega: blowup_omega_gen.sample(rng),
+                phase: blowup_phase_gen.sample(rng),
+                amp: blowup_radius_gen.sample(rng),
+                offset: vw * blowup_center_gen.sample(rng),
+            },
+            time,
+        );
 
-        self.blowup_y.update(CosineTiming {
-            omega: blowup_omega_gen.sample(rng),
-            phase: blowup_phase_gen.sample(rng),
-            amp: blowup_radius_gen.sample(rng),
-            offset: vh * blowup_center_gen.sample(rng),
-        }, time);
+        self.blowup_y.update(
+            CosineTiming {
+                omega: blowup_omega_gen.sample(rng),
+                phase: blowup_phase_gen.sample(rng),
+                amp: blowup_radius_gen.sample(rng),
+                offset: vh * blowup_center_gen.sample(rng),
+            },
+            time,
+        );
 
-        self.blowup_prog.update(CubicBezierTiming {
-            func: CUBIC_BEZIER_BLOWUP,
-            from: 0f64,
-            to: 1f64,
-            duration: BLOWUP_DURATION,
-            delay: time,
-        }, time);
+        self.blowup_prog.update(
+            CubicBezierTiming {
+                func: CUBIC_BEZIER_BLOWUP,
+                from: 0f64,
+                to: 1f64,
+                duration: BLOWUP_DURATION,
+                delay: time,
+            },
+            time,
+        );
     }
 
     pub fn condense(&mut self, delay: f64, time: f64) {
-        self.blowup_prog.update(CubicBezierTiming {
-            func: CUBIC_BEZIER_BLOWUP,
-            from: 1f64,
-            to: 0f64,
-            duration: CONDENSE_DURATION,
-            delay: time + delay,
-        }, time);
+        self.blowup_prog.update(
+            CubicBezierTiming {
+                func: CUBIC_BEZIER_BLOWUP,
+                from: 1f64,
+                to: 0f64,
+                duration: CONDENSE_DURATION,
+                delay: time + delay,
+            },
+            time,
+        );
     }
 
-    pub fn render_to(&self, ctx: &web_sys::CanvasRenderingContext2d, time: f64, char_layout: &LayoutedChar) -> Result<(), JsValue> {
+    pub fn render_to(
+        &self,
+        ctx: &web_sys::CanvasRenderingContext2d,
+        time: f64,
+        char_layout: &LayoutedChar,
+    ) -> Result<(), JsValue> {
         // TODO: eval self x y
         ctx.save();
 
@@ -93,7 +108,14 @@ impl LayoutedComp {
         let dx = self.blowup_x.eval_at(time) * prog;
         let dy = self.blowup_y.eval_at(time) * prog;
 
-        ctx.transform(1f64, 0f64, 0f64, 1f64, dx / char_layout.optical_scale(time), dy / char_layout.optical_scale(time))?;
+        ctx.transform(
+            1f64,
+            0f64,
+            0f64,
+            1f64,
+            dx / char_layout.optical_scale(time),
+            dy / char_layout.optical_scale(time),
+        )?;
 
         ctx.set_fill_style(&JsValue::from_str("black"));
         ctx.set_stroke_style(&JsValue::from_str("black"));
@@ -137,29 +159,39 @@ impl LayoutedChar {
         let blowup_size_gen: Uniform<f64> = Uniform::from((54f64 * 0.9)..(54f64 * 1.1));
         let blowup_transform_gen: Uniform<f64> = Uniform::from(-3.0..3.0);
 
-        self.size.update(CubicBezierTiming {
-            func: CUBIC_BEZIER_BLOWUP,
-            from: self.size.eval_at(time), // TODO: change to eval within update
-            to: blowup_size_gen.sample(rng),
-            duration: BLOWUP_DURATION,
-            delay: time,
-        }, time);
+        self.size.update(
+            CubicBezierTiming {
+                func: CUBIC_BEZIER_BLOWUP,
+                from: self.size.eval_at(time), // TODO: change to eval within update
+                to: blowup_size_gen.sample(rng),
+                duration: BLOWUP_DURATION,
+                delay: time,
+            },
+            time,
+        );
 
-        self.dx.update(CubicBezierTiming {
-            func: CUBIC_BEZIER_BLOWUP,
-            from: self.dx.eval_at(time), // TODO: change to eval within update
-            to: blowup_transform_gen.sample(rng),
-            duration: BLOWUP_DURATION,
-            delay: time,
-        }, time);
+        self.dx.update(
+            CubicBezierTiming {
+                func: CUBIC_BEZIER_BLOWUP,
+                from: self.dx.eval_at(time), // TODO: change to eval within update
+                to: blowup_transform_gen.sample(rng),
+                duration: BLOWUP_DURATION,
+                delay: time,
+            },
+            time,
+        );
 
-        self.dy.update(CubicBezierTiming {
-            func: CUBIC_BEZIER_BLOWUP,
-            from: self.dy.eval_at(time), // TODO: change to eval within update
-            to: blowup_transform_gen.sample(rng) - self.optical_height(time + BLOWUP_DURATION) / 2f64,
-            duration: BLOWUP_DURATION,
-            delay: time,
-        }, time);
+        self.dy.update(
+            CubicBezierTiming {
+                func: CUBIC_BEZIER_BLOWUP,
+                from: self.dy.eval_at(time), // TODO: change to eval within update
+                to: blowup_transform_gen.sample(rng)
+                    - self.optical_height(time + BLOWUP_DURATION) / 2f64,
+                duration: BLOWUP_DURATION,
+                delay: time,
+            },
+            time,
+        );
     }
 
     pub fn condense(&mut self, delay: f64, time: f64) {
@@ -168,7 +200,11 @@ impl LayoutedChar {
         }
     }
 
-    pub fn render_to(&self, ctx: &web_sys::CanvasRenderingContext2d, time: f64) -> Result<(), JsValue> {
+    pub fn render_to(
+        &self,
+        ctx: &web_sys::CanvasRenderingContext2d,
+        time: f64,
+    ) -> Result<(), JsValue> {
         ctx.save();
 
         let scale = self.optical_scale(time);
@@ -253,9 +289,20 @@ impl LayoutedTitle {
         delay
     }
 
-    pub fn render_to(&self, ctx: &web_sys::CanvasRenderingContext2d, time: f64) -> Result<(), JsValue> {
+    pub fn render_to(
+        &self,
+        ctx: &web_sys::CanvasRenderingContext2d,
+        time: f64,
+    ) -> Result<(), JsValue> {
         ctx.save();
-        ctx.transform(1f64, 0f64, 0f64, 1f64, self.dx.eval_at(time), self.dy.eval_at(time))?;
+        ctx.transform(
+            1f64,
+            0f64,
+            0f64,
+            1f64,
+            self.dx.eval_at(time),
+            self.dy.eval_at(time),
+        )?;
         for char in &self.chars {
             char.render_to(ctx, time)?;
             ctx.transform(1f64, 0f64, 0f64, 1f64, char.optical_width(time), 0f64)?;
@@ -270,27 +317,34 @@ pub fn prepare(spec: &JsValue) -> Result<LayoutedTitle, JsValue> {
     // TODO: use serde-wasm-bindgen
     let spec: Vec<CharResp> = spec.into_serde().unwrap();
 
-    let chars: Vec<_> = spec.into_iter().map(|c| -> Result<LayoutedChar, JsValue> {
-        let comps: Vec<_> = c.components.into_iter().map(|outline| -> Result<LayoutedComp, JsValue> {
-            Ok(LayoutedComp::new(outline))
-            // layout.rendered.append_inner_to_elem("canvas-debug")?;
-            // result.push(JsValue::from(cur))
-        }).collect::<Result<_, _>>()?;
+    let chars: Vec<_> = spec
+        .into_iter()
+        .map(|c| -> Result<LayoutedChar, JsValue> {
+            let comps: Vec<_> = c
+                .components
+                .into_iter()
+                .map(|outline| -> Result<LayoutedComp, JsValue> {
+                    Ok(LayoutedComp::new(outline))
+                    // layout.rendered.append_inner_to_elem("canvas-debug")?;
+                    // result.push(JsValue::from(cur))
+                })
+                .collect::<Result<_, _>>()?;
 
-        let c = LayoutedChar {
-            comps,
-            size: CubicBezierTiming::still(54f64),
+            let c = LayoutedChar {
+                comps,
+                size: CubicBezierTiming::still(54f64),
 
-            dx: CubicBezierTiming::still(0f64),
-            dy: CubicBezierTiming::still(0f64),
+                dx: CubicBezierTiming::still(0f64),
+                dy: CubicBezierTiming::still(0f64),
 
-            em: c.em,
-            bbox: c.bbox,
-            char: c.char,
-        };
+                em: c.em,
+                bbox: c.bbox,
+                char: c.char,
+            };
 
-        Ok(c)
-    }).collect::<Result<_, _>>()?;
+            Ok(c)
+        })
+        .collect::<Result<_, _>>()?;
 
     let title = LayoutedTitle {
         chars,
@@ -304,17 +358,16 @@ pub fn prepare(spec: &JsValue) -> Result<LayoutedTitle, JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn render(spec: &LayoutedTitle, ctx: &CanvasRenderingContext2d, time: f64) -> Result<(), JsValue> {
+pub fn render(
+    spec: &LayoutedTitle,
+    ctx: &CanvasRenderingContext2d,
+    time: f64,
+) -> Result<(), JsValue> {
     spec.render_to(ctx, time)
 }
 
 #[wasm_bindgen]
-pub fn blowup(
-    title: &mut LayoutedTitle,
-    fx: f64,
-    fy: f64,
-    time: f64,
-) -> Result<(), JsValue> {
+pub fn blowup(title: &mut LayoutedTitle, fx: f64, fy: f64, time: f64) -> Result<(), JsValue> {
     let mut rng = rand::thread_rng();
     let vw = window().unwrap().inner_width()?.as_f64().unwrap();
     let vh = window().unwrap().inner_height()?.as_f64().unwrap();
@@ -325,9 +378,6 @@ pub fn blowup(
 }
 
 #[wasm_bindgen]
-pub fn condense(
-    title: &mut LayoutedTitle,
-    time: f64,
-) -> Result<f64, JsValue> {
+pub fn condense(title: &mut LayoutedTitle, time: f64) -> Result<f64, JsValue> {
     Ok(title.condense(time))
 }

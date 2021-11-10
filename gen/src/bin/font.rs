@@ -36,7 +36,11 @@ fn main(args: Args) -> anyhow::Result<()> {
     let stdin = std::io::stdin();
     let mut input = String::new();
     while stdin.read_line(&mut input)? != 0 {
-        let converted: anyhow::Result<Vec<_>> = input.trim().chars().map(|c| pointwise_gen::font::parse_char(c, &font)).collect();
+        let converted: anyhow::Result<Vec<_>> = input
+            .trim()
+            .chars()
+            .map(|c| pointwise_gen::font::parse_char(c, &font))
+            .collect();
         let converted = converted?;
         println!("{}", serde_json::to_string_pretty(&converted)?);
     }

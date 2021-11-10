@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use pointwise_common::font::*;
 use lyon_path::PathEvent;
+use pointwise_common::font::*;
 
 fn split_closed_loop<I: Iterator<Item = OutlineCmd>>(outline: I) -> Vec<Outline> {
     let mut output = Vec::new();
@@ -19,7 +19,9 @@ fn split_closed_loop<I: Iterator<Item = OutlineCmd>>(outline: I) -> Vec<Outline>
     output
 }
 
-fn component_to_lyon_path_ev<I: Iterator<Item = OutlineCmd>>(outline: I) -> impl Iterator<Item = PathEvent> {
+fn component_to_lyon_path_ev<I: Iterator<Item = OutlineCmd>>(
+    outline: I,
+) -> impl Iterator<Item = PathEvent> {
     let mut start = (0f32, 0f32).into();
     let mut last = (0f32, 0f32).into();
     outline.map(move |cmd| match cmd {
@@ -49,7 +51,11 @@ fn component_to_lyon_path_ev<I: Iterator<Item = OutlineCmd>>(outline: I) -> impl
             last = current;
             output
         }
-        OutlineCmd::Cubic { to, ctrl_first, ctrl_second } => {
+        OutlineCmd::Cubic {
+            to,
+            ctrl_first,
+            ctrl_second,
+        } => {
             let current = (to.0 as f32, to.1 as f32).into();
             let output = PathEvent::Cubic {
                 from: last,
@@ -73,7 +79,12 @@ fn component_to_lyon_path_ev<I: Iterator<Item = OutlineCmd>>(outline: I) -> impl
     })
 }
 
-fn collect_outline(id: usize, outlines: &Vec<Outline>, children: &Vec<Vec<usize>>, collect: &mut Vec<Outline>) {
+fn collect_outline(
+    id: usize,
+    outlines: &Vec<Outline>,
+    children: &Vec<Vec<usize>>,
+    collect: &mut Vec<Outline>,
+) {
     let mut current: Outline = outlines[id].clone();
     for child in children[id].iter() {
         current.extend(outlines[*child].iter().cloned());
@@ -91,7 +102,9 @@ pub fn split_components(input: Outline) -> Vec<Outline> {
     // Build inside set
     for i in 0..loops.len() {
         for j in 0..loops.len() {
-            if i == j { continue }
+            if i == j {
+                continue;
+            }
             log::debug!("Testing {} contained in {}", i, j);
 
             let i_first_point = match loops[i].get(0).unwrap() {
@@ -100,7 +113,12 @@ pub fn split_components(input: Outline) -> Vec<Outline> {
             };
             let j_path = component_to_lyon_path_ev(loops[j].iter().cloned());
             // TODO: change tolerance?
-            let i_inside_j = lyon_algorithms::hit_test::hit_test_path(&i_first_point.into(), j_path, lyon_path::FillRule::EvenOdd, 1e-1);
+            let i_inside_j = lyon_algorithms::hit_test::hit_test_path(
+                &i_first_point.into(),
+                j_path,
+                lyon_path::FillRule::EvenOdd,
+                1e-1,
+            );
             if i_inside_j {
                 inside[i].insert(j);
             }
@@ -153,7 +171,9 @@ pub fn split_components(input: Outline) -> Vec<Outline> {
 }
 
 #[derive(Default)]
-struct OutlineBuilder{ outline: Outline }
+struct OutlineBuilder {
+    outline: Outline,
+}
 impl ttf_parser::OutlineBuilder for OutlineBuilder {
     fn move_to(&mut self, x: f32, y: f32) {
         self.outline.push(OutlineCmd::Move(x as f64, y as f64));
@@ -193,7 +213,9 @@ pub fn parse_char(c: char, face: &ttf_parser::Face) -> anyhow::Result<CharResp> 
     // let mut char_resp = CharResp::new(c);
     let mut builder = OutlineBuilder::default();
 
-    let bbox = face.outline_glyph(glyph, &mut builder).ok_or(anyhow::anyhow!("Glyph \"{}\" has corrupted outline.", c))?;
+    let bbox = face
+        .outline_glyph(glyph, &mut builder)
+        .ok_or(anyhow::anyhow!("Glyph \"{}\" has corrupted outline.", c))?;
 
     let components = split_components(builder.outline);
 
