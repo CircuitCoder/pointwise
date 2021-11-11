@@ -18,6 +18,8 @@ const BLOWUP_DURATION: f64 = 1000f64;
 const CONDENSE_DURATION: f64 = 1000f64;
 const CONDENSE_INTERVAL: f64 = 200f64;
 const CONDENSE_MOVE_DURATION: f64 = 2000f64;
+const FONT_SIZE_LIST: f64 = 42f64;
+const FONT_SIZE_TITLE: f64 = 54f64;
 
 const CUBIC_BEZIER_EASE: CubicBezierFunc = CubicBezierFunc {
     x1: 0.25,
@@ -180,7 +182,7 @@ impl LayoutedChar {
         }
 
         // Dy variation = Maximum height variation
-        let blowup_size_gen: Uniform<f64> = Uniform::from((54f64 * 0.9)..(54f64 * 1.1));
+        let blowup_size_gen: Uniform<f64> = Uniform::from((FONT_SIZE_TITLE * 0.9)..(FONT_SIZE_TITLE * 1.1));
         let blowup_transform_gen: Uniform<f64> = Uniform::from(-3.0..3.0);
 
         self.size.update(
@@ -357,7 +359,7 @@ pub fn prepare(spec: &JsValue) -> Result<LayoutedTitle, JsValue> {
 
             let c = LayoutedChar {
                 comps,
-                size: CubicBezierTiming::still(54f64),
+                size: CubicBezierTiming::still(FONT_SIZE_LIST),
 
                 dx: CubicBezierTiming::still(0f64),
                 dy: CubicBezierTiming::still(0f64),
@@ -374,7 +376,7 @@ pub fn prepare(spec: &JsValue) -> Result<LayoutedTitle, JsValue> {
     let title = LayoutedTitle {
         chars,
 
-        base_size: 54f64,
+        base_size: FONT_SIZE_LIST, // TODO: update me
         dx: CubicBezierTiming::still(0f64),
         dy: CubicBezierTiming::still(0f64),
     };
