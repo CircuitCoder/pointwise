@@ -9,6 +9,7 @@
 
 .list-entry {
   padding: 20px 0;
+  cursor: pointer;
 
   &-date {
     @include monospace;
@@ -16,5 +17,18 @@
     line-height: 32px;
     color: rgba(0,0,0,.54);
     margin-bottom: 6px;
+  }
+}
+
+.list {
+  transform: translateY(50px);
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+  transition: transform .5s ease-out, opacity .5s ease-out;
+  &-shown {
+    transition-delay: .25s;
+    transform: none;
+    opacity: 1;
   }
 }

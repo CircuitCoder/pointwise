@@ -1,0 +1,43 @@
+.about {
+  &-arrow {
+    width: 100px;
+    margin-top: -200px;
+    transform: translate(10px, -10px);
+  }
+
+  h2 {
+    font-size: 36px;
+    font-weight: 900;
+    @include serif;
+    margin-top: -20px;
+    margin-bottom: 20px;
+
+    small {
+      @include monospace;
+      font-size: 20px;
+      font-weight: 400;
+      color: rgba(0,0,0,.54);
+    }
+  }
+
+  p {
+    max-width: 800px;
+  }
+
+  &-red {
+    color: rgba(255, 0, 0);
+  }
+
+  transform: translateY(50px);
+  opacity: 0;
+  transition: transform .5s ease-out, opacity .5s ease-out;
+  // TODO: use WAAPI
+  position: absolute;
+  width: 100%;
+
+  &-shown {
+    transition-delay: .25s;
+    transform: none;
+    opacity: 1;
+  }
+}

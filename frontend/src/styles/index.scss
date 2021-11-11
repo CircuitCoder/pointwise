@@ -4,6 +4,7 @@
 @import './post.scss';
 @import './list.scss';
 @import './home.scss';
+@import './about.scss';
 
 body {
   margin: 0;
@@ -20,6 +21,7 @@ body {
     change-color(#F6416C, $alpha: .5) 100%
   );
   */
+  font-size: 18px;
 }
 
 code {
@@ -30,6 +32,7 @@ code {
 .app {
   height: 100vh;
   width: 100vw;
+  overflow-y: scroll;
 }
 
 .spring {
