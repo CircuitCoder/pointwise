@@ -1,0 +1,95 @@
+$brand-dot-aurora-overflow: -150px;
+
+.brand-dot {
+  width: 150px;
+  height: 150px;
+  position: relative;
+
+  &-aurora {
+    background: rgba(255, 0, 0, 0.05);
+    position: absolute;
+    top: $brand-dot-aurora-overflow;
+    bottom: $brand-dot-aurora-overflow;
+    left: $brand-dot-aurora-overflow;
+    right: $brand-dot-aurora-overflow;
+
+    border-radius: 50%;
+  }
+
+  &-kernel {
+    background: rgba(255, 0, 0, 0.2);
+    border: 1px red solid;
+
+    position: absolute;
+    box-shadow: rgba(0,0,0,.1) 0 2px 6px;
+
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    border-radius: 50%;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  margin-bottom: 200px;
+  margin-top: 100px;
+
+  &-text {
+    margin-left: 50px;
+    flex: 1;
+    position: relative;
+
+    &-main {
+      @include serif;
+      font-weight: 900;
+      font-size: 72px;
+      margin: 0;
+    }
+
+    small {
+      @include monospace;
+      font-size: 36px;
+      font-weight: 500;
+      color: rgba(0,0,0,.54);
+    }
+  }
+}
+
+.column {
+  max-width: 1200px;
+  padding: 60px 40px;
+  margin: 0 auto;
+}
+
+nav {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  font-size: 24px;
+  color: rgba(0,0,0,1);
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+
+  a {
+    text-decoration: none;;
+    cursor: pointer;
+    opacity: .54;
+    transition: opacity .2s ease;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+.nav-split {
+  margin: 0 20px;
+  @include monospace;
+  opacity: .38;
+}

@@ -6,6 +6,8 @@ import { LayoutedTitle } from 'pointwise-render';
 
 import * as Shaders from './shaders';
 
+import BrandDot from './comps/BrandDot';
+
 const Render = import('pointwise-render');
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T
@@ -93,7 +95,6 @@ export default function App(): JSX.Element {
         setCur(State.Centered);
       }
     }}>
-
       <div className={clsx(
         'title-global-backdrop',
         {
@@ -108,12 +109,39 @@ export default function App(): JSX.Element {
         'title-global-clipped': cur === State.Loading,
       })}></canvas>
 
-      <div className="list-entry">
-        <canvas
-          ref={startup}
-          className={clsx("list-title", { 'list-title-hidden': titleHidden })}
-        />
+      <div className="column">
+        <header>
+          <div className="brand">
+            <BrandDot />
+            <div className="brand-text">
+              <h1 className="brand-text-main">
+                点测量
+                <small>
+                  &nbsp;:: BlogOf&lt;Meow&gt;
+                </small>
+              </h1>
+
+              <nav>
+                <a>文章</a>
+                <span className="nav-split">/</span>
+                <a>索引</a>
+                <span className="nav-split">/</span>
+                <a>关于</a>
+              </nav>
+            </div>
+          </div>
+          <nav></nav>
+        </header>
+
+        <div className="list-entry">
+          <div className="list-entry-date">2020-02-02</div>
+          <canvas
+            ref={startup}
+            className={clsx("list-title", { 'list-title-hidden': titleHidden })}
+          />
+        </div>
       </div>
+
       <div className={clsx("post", { 'post-hidden': hidden })}>
         <div className="post-inner">
           <div className="post-meta">

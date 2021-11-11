@@ -30,6 +30,8 @@ $shade-diag-dist: 200px;
   bottom: 0;
   pointer-events: none;
 
+  z-index: 20;
+
   transform: scaleY(-1);
 
   clip-path: polygon(
@@ -57,8 +59,9 @@ $shade-diag-dist: 200px;
   left: 0;
   right: 0;
   pointer-events: none;
+  z-index: 10;
 
-  background: rgba(255,255,255,.8);
+  background: #CCC;
   clip-path: polygon(calc(100% + #{$shade-diag-dist}) 0, calc(100% + #{$shade-diag-dist}) 0, calc(100% + #{$shade-diag-dist}) 100%, 100% 100%);
   transition: clip-path 1.5s ease;
 

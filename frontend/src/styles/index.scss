@@ -3,6 +3,7 @@
 @import './title.scss';
 @import './post.scss';
 @import './list.scss';
+@import './home.scss';
 
 body {
   margin: 0;
@@ -12,11 +13,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 
   overflow: hidden;
+  /*
   background-image: linear-gradient(
     45deg,
     change-color(#FFF6B7, $alpha: .5) 10%,
     change-color(#F6416C, $alpha: .5) 100%
   );
+  */
 }
 
 code {
