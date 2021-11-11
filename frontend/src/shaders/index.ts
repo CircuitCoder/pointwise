@@ -2,7 +2,6 @@ import SHADER_BINLIFT from './color-binlift.glsl';
 import SHADER_REDUCE from './color-reduce.glsl';
 import SHADER_COVER from './cover.glsl';
 import SHADER_CIRCLE from './circle.glsl';
-import ShADER_CIRCLE_FASTAVG from './circle-fastavg.glsl'
 
 const LEVELS = 5;
 
@@ -144,24 +143,6 @@ function buildCircleFilter(gl: WebGL2RenderingContext, avg: WebGLTexture, width:
 
       attachTexture(gl, avg, 0)
       gl.uniform1i(stage.uniforms.avg, 0);
-    },
-    true,
-  );
-}
-
-function buildCircleFastavgFilter(gl: WebGL2RenderingContext, orig: WebGLTexture, width: number, height: number): Stage {
-  const shaderCircleFastavg = compile(gl, ShADER_CIRCLE_FASTAVG);
-  return createRenderer(
-    gl,
-    shaderCircleFastavg,
-    width,
-    height,
-    (gl, stage, { patch }) => {
-      gl.uniform1f(stage.uniforms.ksize, patch);
-      gl.uniform2f(stage.uniforms.size, width, height);
-
-      attachTexture(gl, orig, 0)
-      gl.uniform1i(stage.uniforms.orig, 0);
     },
     true,
   );
