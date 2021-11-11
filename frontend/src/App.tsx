@@ -51,7 +51,7 @@ export default function App(): JSX.Element {
       if(!shaded) return;
       shaded.width = window.innerWidth;
       shaded.height = window.innerHeight;
-      const prog = Shaders.setup(shaded);
+      const prog = Shaders.setup(shaded, 20);
 
       const frame = () => {
         let now = performance.now();

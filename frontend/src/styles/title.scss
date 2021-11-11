@@ -58,8 +58,7 @@ $shade-diag-dist: 200px;
   right: 0;
   pointer-events: none;
 
-  backdrop-filter: grayscale(1);
-  background: white;
+  background: rgba(255,255,255,.8);
   clip-path: polygon(calc(100% + #{$shade-diag-dist}) 0, calc(100% + #{$shade-diag-dist}) 0, calc(100% + #{$shade-diag-dist}) 100%, 100% 100%);
   transition: clip-path 1.5s ease;
 
