@@ -25,9 +25,10 @@
   opacity: 0;
   position: absolute;
   width: 100%;
-  transition: transform .5s ease-out, opacity .5s ease-out;
+  transition: transform .5s ease-in, opacity .5s ease-in;
   &-shown {
     transition-delay: .25s;
+    transition-timing-function: ease-out;
     transform: none;
     opacity: 1;
   }
