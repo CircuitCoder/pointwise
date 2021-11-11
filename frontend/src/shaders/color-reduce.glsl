@@ -56,16 +56,6 @@ void main() {
   PROCESS(level_2, 2)
   PROCESS(level_3, 3)
   PROCESS(level_4, 4)
-  PROCESS(level_5, 5)
-  PROCESS(level_6, 6)
-  PROCESS(level_7, 7)
-  PROCESS(level_8, 8)
-  PROCESS(level_9, 9)
-  PROCESS(level_10, 10)
-  PROCESS(level_11, 11)
-
-  // int tmp = 0;
-  // result = process_loop_with(level_5, 0, vec4(0,0,0,0), tmp);
 
   avg = result;
 }

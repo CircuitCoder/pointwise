@@ -4,7 +4,7 @@ import SHADER_COVER from './cover.glsl';
 import SHADER_CIRCLE from './circle.glsl';
 import ShADER_CIRCLE_FASTAVG from './circle-fastavg.glsl'
 
-const LEVELS = 12;
+const LEVELS = 5;
 
 type Program = {
   input: WebGLTexture,
@@ -31,13 +31,19 @@ export function setup(canvas: HTMLCanvasElement): Program {
 
   const gl = getGL(canvas);
 
-  const input = createTexture(gl, width, height, true);
+  const input = createTexture(gl, width, height);
 
-  const circleFilterStage = buildCircleFastavgFilter(gl, input, width, height);
+  const [vertLevels, vertBinliftStages] = buildBinliftTower(gl, input, width, height, false);
+  const vertReduceStage = buildReducer(gl, vertLevels, width, height, false);
+
+  const [hozLevels, hozBinliftStages] = buildBinliftTower(gl, vertReduceStage.output, width, height, true);
+  const hozReduceStage = buildReducer(gl, hozLevels, width, height, true);
+
+  const circleFilterStage = buildCircleFilter(gl, hozReduceStage.output, width, height);
 
   return {
     input,
-    stages: [circleFilterStage],
+    stages: [...vertBinliftStages, vertReduceStage, ...hozBinliftStages, hozReduceStage, circleFilterStage],
     gl,
     canvas,
   };
