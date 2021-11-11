@@ -7,7 +7,6 @@ uniform sampler2D last;
 
 uniform int bias;
 uniform bool horizontal;
-uniform vec2 size;
 
 vec4 colorWeightedSum(vec4 a, vec4 b) {
   float sum = a[3] + b[3];
@@ -26,8 +25,8 @@ void main() {
   );
 
   ivec2 siblingCoord = ivec2(
-    horizontal ? mod(gl_FragCoord[0] + float(bias), size[0]) : gl_FragCoord[0],
-    horizontal ? gl_FragCoord[1] : mod(gl_FragCoord[1] + float(bias), size[1])
+    horizontal ? gl_FragCoord[0] + float(bias) : gl_FragCoord[0],
+    horizontal ? gl_FragCoord[1] : gl_FragCoord[1] + float(bias)
   );
   vec4 sibling = texelFetch(
     last, siblingCoord, 0

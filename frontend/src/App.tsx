@@ -69,6 +69,7 @@ export default function App(): JSX.Element {
   const [cur, setCur] = useState(State.Anchored);
   const [titleHidden, setTitleHidden] = useState(false);
   const [hidden, setHidden] = useState(true);
+  const [shadeHidden, setShadeHidden] = useState(false);
 
   return (
     <div className="app" onClick={() => {
@@ -80,12 +81,15 @@ export default function App(): JSX.Element {
         setTitleHidden(true);
         setCur(State.Loading);
       } else {
-        const delay = render.current.condense(title.current, performance.now());
-
-        // TODO: do we have any better way to do this
         setTimeout(() => {
-          setHidden(false);
-        }, delay);
+          if(!title.current || !titleElem.current || !render.current) return;
+          const delay = render.current.condense(title.current, performance.now());
+
+          // TODO: do we have any better way to do this
+          setTimeout(() => {
+            setHidden(false);
+          }, delay);
+        }, 2000);
         setCur(State.Centered);
       }
     }}>
@@ -97,9 +101,7 @@ export default function App(): JSX.Element {
         }
       )} />
       <canvas id="title-global-shaded" className={clsx({
-        'title-global-shaded-shown': cur !== State.Anchored,
-        'title-global-shaded-hidden': !hidden,
-        'title-global-shaded-dimmed': cur === State.Centered,
+        'title-global-shaded-shown': cur === State.Loading,
       })}></canvas>
       <canvas id="title-global" className={clsx({
         'title-global-hidden': cur === State.Anchored,

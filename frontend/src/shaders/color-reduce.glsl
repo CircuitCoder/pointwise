@@ -18,7 +18,6 @@ uniform sampler2D level_11;
 
 uniform bool enables[12]; // Binary repersentation of kernel size
 uniform bool horizontal;
-uniform vec2 size;
 
 #define PROCESS(level, i) if(enables[i]) result = process_loop_with(level, i, result, bias);
 
@@ -35,8 +34,8 @@ vec4 colorWeightedSum(vec4 a, vec4 b) {
 
 vec4 process_loop_with(sampler2D level, const int i, vec4 result, inout int bias) {
   ivec2 coord = ivec2(
-    horizontal ? mod(gl_FragCoord[0] + float(bias), size[0]) : gl_FragCoord[0],
-    horizontal ? gl_FragCoord[1] : mod(gl_FragCoord[1] + float(bias), size[1])
+    horizontal ? gl_FragCoord[0] + float(bias) : gl_FragCoord[0],
+    horizontal ? gl_FragCoord[1] : gl_FragCoord[1] + float(bias)
   );
   vec4 lookup = texelFetch(
     level, coord, 0

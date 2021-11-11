@@ -2,6 +2,7 @@ import SHADER_BINLIFT from './color-binlift.glsl';
 import SHADER_REDUCE from './color-reduce.glsl';
 import SHADER_COVER from './cover.glsl';
 import SHADER_CIRCLE from './circle.glsl';
+import ShADER_CIRCLE_FASTAVG from './circle-fastavg.glsl'
 
 const LEVELS = 12;
 
@@ -30,19 +31,13 @@ export function setup(canvas: HTMLCanvasElement): Program {
 
   const gl = getGL(canvas);
 
-  const input = createTexture(gl, width, height);
+  const input = createTexture(gl, width, height, true);
 
-  const [vertLevels, vertBinliftStages] = buildBinliftTower(gl, input, width, height, false);
-  const vertReduceStage = buildReducer(gl, vertLevels, width, height, false);
-
-  const [hozLevels, hozBinliftStages] = buildBinliftTower(gl, vertReduceStage.output, width, height, true);
-  const hozReduceStage = buildReducer(gl, hozLevels, width, height, true);
-
-  const circleFilterStage = buildCircleFilter(gl, hozReduceStage.output, width, height);
+  const circleFilterStage = buildCircleFastavgFilter(gl, input, width, height);
 
   return {
     input,
-    stages: [...vertBinliftStages, vertReduceStage, ...hozBinliftStages, hozReduceStage, circleFilterStage],
+    stages: [circleFilterStage],
     gl,
     canvas,
   };
@@ -52,6 +47,7 @@ export function render(prog: Program, input: HTMLCanvasElement | HTMLImageElemen
   // Update texture
   const { gl, input: texture, stages, canvas } = prog;
 
+  // gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(
     gl.TEXTURE_2D,
@@ -61,6 +57,7 @@ export function render(prog: Program, input: HTMLCanvasElement | HTMLImageElemen
     gl.UNSIGNED_BYTE,
     input,
   );
+  gl.generateMipmap(gl.TEXTURE_2D);
 
   for(const stage of stages)
     renderStage(gl, stage, canvas.width, canvas.height, { patch });
@@ -100,7 +97,6 @@ function buildBinliftTower(gl: WebGL2RenderingContext, input: WebGLTexture, widt
     const output = createRenderer(gl, shaderBinlift, width, height, (gl, stage) => {
       gl.uniform1i(stage.uniforms.bias, 1 << _i);
       gl.uniform1i(stage.uniforms.horizontal, horizontal ? 0 : 1);
-      gl.uniform2f(stage.uniforms.size, width, height);
 
       attachTexture(gl, _last, 0)
       gl.uniform1i(stage.uniforms.last, 0);
@@ -122,7 +118,6 @@ function buildReducer(gl: WebGL2RenderingContext, levels: WebGLTexture[], width:
     const bin = binrepr(patch, LEVELS);
     gl.uniform1iv(stage.uniforms['enables[0]'], Uint32Array.from(bin));
     gl.uniform1i(stage.uniforms.horizontal, horizontal ? 0 : 1)
-    gl.uniform2f(stage.uniforms.size, width, height);
 
     for(let i = 0; i < LEVELS; ++i) {
       attachTexture(gl, levels[i], i);
@@ -140,7 +135,6 @@ function buildCircleFilter(gl: WebGL2RenderingContext, avg: WebGLTexture, width:
     height,
     (gl, stage, { patch }) => {
       gl.uniform2f(stage.uniforms.ksize, patch, patch);
-      gl.uniform2f(stage.uniforms.size, width, height);
 
       attachTexture(gl, avg, 0)
       gl.uniform1i(stage.uniforms.avg, 0);
@@ -149,7 +143,25 @@ function buildCircleFilter(gl: WebGL2RenderingContext, avg: WebGLTexture, width:
   );
 }
 
-function createTexture(gl: WebGL2RenderingContext, width: number, height: number): WebGLTexture {
+function buildCircleFastavgFilter(gl: WebGL2RenderingContext, orig: WebGLTexture, width: number, height: number): Stage {
+  const shaderCircleFastavg = compile(gl, ShADER_CIRCLE_FASTAVG);
+  return createRenderer(
+    gl,
+    shaderCircleFastavg,
+    width,
+    height,
+    (gl, stage, { patch }) => {
+      gl.uniform1f(stage.uniforms.ksize, patch);
+      gl.uniform2f(stage.uniforms.size, width, height);
+
+      attachTexture(gl, orig, 0)
+      gl.uniform1i(stage.uniforms.orig, 0);
+    },
+    true,
+  );
+}
+
+function createTexture(gl: WebGL2RenderingContext, width: number, height: number, withMipmap = false): WebGLTexture {
   // From https://webgl2fundamentals.org/webgl/lessons/webgl-render-to-texture.html
   const texture = gl.createTexture();
   if(!texture) throw new Error('Unable to create texture');
@@ -165,10 +177,15 @@ function createTexture(gl: WebGL2RenderingContext, width: number, height: number
     null
   );
 
-  // set the filtering so we don't need mips
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  if(!withMipmap) {
+    // set the filtering so we don't need mips
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  } else {
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  }
+
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
   return texture;
 }

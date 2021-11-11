@@ -1,94 +1,5 @@
 $shade-diag-dist: 200px;
 
-.title-char {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 0;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  // transition: --x .2s ease, --y .2s ease, --optical-scale .2s ease;
-  // We are using WAAPI
-  transform: translate(var(--x), var(--y));
-
-  span {
-    // TODO: font-size
-    color: transparent;
-    opacity: 0;
-  }
-}
-
-.title-component {
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,.6));
-  transition: filter 2s ease;
-
-  g {
-    transform: scale(var(--optical-scale));
-    transform-origin: 0 0;
-
-    path {
-      fill: #333;
-      stroke: rgba(0,0,0,.3);
-      stroke-width: 20px;
-    }
-  }
-
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-
-  width: 100%;
-  height: 100%;
-
-  transform: translate(calc(var(--dx) * var(--deriv)), calc(var(--dy) * var(--deriv)));
-}
-
-.title-char:hover .title-component {
-  filter: none;
-}
-
-.title-centered {
-  y: 50vh;
-  x: 50vw;
-}
-
-#title-root {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  pointer-events: none;
-}
-
-path {
-  transition: fill-opacity .5s ease, stroke-opacity .5s ease;
-}
-
-.title-char-loading {
-  path {
-    fill-opacity: 0.1;
-    stroke-opacity: 1;
-  }
-
-  /*
-  .title-component {
-    --deriv: 1;
-    // filter: drop-shadow(0 4px 12px rgba(0,0,0,.6)) blur(2px);
-  }
-  */
-}
-
-.title-char:first-child .title-component:first-child path {
-  fill: red;
-  stroke: red;
-}
-
 #title-global {
   position: absolute;
   top: 0;
@@ -104,27 +15,10 @@ path {
   }
 
   clip-path: polygon(0 0, calc(100% + #{$shade-diag-dist}) 0, 100% 100%, 0 100%);
-  transition: clip-path 1s ease;
+  transition: clip-path 1.5s ease;
 
   &.title-global-clipped {
     clip-path: polygon(-#{$shade-diag-dist} 0, 0 0, -#{$shade-diag-dist} 100%, -#{$shade-diag-dist} 100%);
-  }
-}
-
-.title-loading-bg {
-  &-start {
-    stop-color: #FFF3B0;
-  }
-
-  &-end {
-    stop-color: #CA26FF;
-  }
-
-  &-render {
-    x: 0px;
-    y: 0px;
-    width: 100vw;
-    height: 100vh;
   }
 }
 
@@ -144,6 +38,7 @@ path {
     calc(100% + #{$shade-diag-dist}) 100%,
     calc(100% + #{$shade-diag-dist}) 100%
   );
+  transition: clip-path 1.5s ease;
 
   &.title-global-shaded-shown {
     clip-path: polygon(
@@ -152,17 +47,6 @@ path {
       100% 100%,
       0 100%
     );
-    transition: clip-path 1s ease;
-  }
-
-  &.title-global-shaded-dimmed {
-    opacity: 0.2;
-    transition: opacity 2s ease;
-  }
-
-  &.title-global-shaded-hidden {
-    opacity: 0;
-    transition: opacity 2s ease;
   }
 }
 
@@ -175,8 +59,9 @@ path {
   pointer-events: none;
 
   backdrop-filter: grayscale(1);
+  background: white;
   clip-path: polygon(calc(100% + #{$shade-diag-dist}) 0, calc(100% + #{$shade-diag-dist}) 0, calc(100% + #{$shade-diag-dist}) 100%, 100% 100%);
-  transition: clip-path 1s ease;
+  transition: clip-path 1.5s ease;
 
   &-shown {
     clip-path: polygon(0 0, 100% 0, 100% 100%, -#{$shade-diag-dist} 100%);

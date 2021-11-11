@@ -6,7 +6,6 @@ uniform sampler2D avg;
 
 // TODO: grid transform
 uniform vec2 ksize;
-uniform vec2 size;
 
 void main() {
   ivec2 avgCoord = ivec2(
@@ -21,7 +20,7 @@ void main() {
   float eff = exp(fillFactor);
   float enff = exp(-fillFactor);
   float tanhff = (eff - enff) / (eff + enff);
-  float radius = tanhff * min(ksize[0], ksize[1]) * 0.4; // TODO: make 0.8 an uniform variable
+  float radius = tanhff * min(ksize[0], ksize[1]) * 0.3; // TODO: make 0.8 an uniform variable
 
   vec2 center = vec2(
     float(avgCoord[0]) + ksize[0] / 2. - 0.5,
