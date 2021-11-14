@@ -320,7 +320,9 @@ impl LayoutedTitle {
         &self,
         ctx: &web_sys::CanvasRenderingContext2d,
         time: f64,
-    ) -> Result<(), JsValue> {
+    ) -> Result<f64, JsValue> {
+        let mut total_width = 0f64;
+
         ctx.save();
         ctx.transform(
             1f64,
@@ -332,10 +334,12 @@ impl LayoutedTitle {
         )?;
         for (idx, char) in self.chars.iter().enumerate() {
             char.render_to(ctx, time, idx == 0)?;
-            ctx.transform(1f64, 0f64, 0f64, 1f64, char.optical_width(time), 0f64)?;
+            let char_width = char.optical_width(time);
+            ctx.transform(1f64, 0f64, 0f64, 1f64, char_width, 0f64)?;
+            total_width += char_width;
         }
         ctx.restore();
-        Ok(())
+        Ok(total_width)
     }
 }
 
@@ -389,7 +393,7 @@ pub fn render(
     spec: &LayoutedTitle,
     ctx: &CanvasRenderingContext2d,
     time: f64,
-) -> Result<(), JsValue> {
+) -> Result<f64, JsValue> {
     spec.render_to(ctx, time)
 }
 

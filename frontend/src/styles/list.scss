@@ -22,5 +22,41 @@
   canvas {
     width: 100%;
     height: 44px;
+    position: absolute;
+
+    &.list-entry-canvas-hidden {
+      opacity: 0;
+    }
+  }
+
+  &-bar {
+    height: 1px;
+    position: relative;
+    background: rgba(0,0,0,.1);
+
+    margin-top: 54px;
+
+    clip-path: polygon(0 -10px, 100% -10px, 100% 10px, 0 10px);
+
+    &:before {
+      content: '';
+      position: absolute;
+      height: 1px;
+      left: 0;
+      right: 0;
+      top: 0;
+      background: black;
+      transform: translateX(-100%);
+      transition: transform .2s ease;
+    }
+  }
+
+  $cls: &;
+  &:hover {
+    #{$cls}-bar {
+      &:before {
+        transform: none;
+      }
+    }
   }
 }

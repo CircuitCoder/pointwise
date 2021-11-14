@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import React, { ReactElement, useCallback, useContext, useRef, useState } from "react";
 import { Ctx } from "../App";
 import Title, { TitleInner } from "./Title";
@@ -8,7 +9,8 @@ type Props = {
 }
 
 const ListEnt = React.memo(({ spec }: Props): ReactElement => {
-  const inner = useRef<TitleInner>(null);
+  const inner = useRef<TitleInner | null>(null);
+  const [barWidth, setBarWidth] = useState(0);
   const [hidden, setHidden] = useState(false);
 
   const global = useContext(Ctx);
@@ -21,12 +23,18 @@ const ListEnt = React.memo(({ spec }: Props): ReactElement => {
     setHidden(true);
   }, [global?.titleLayer]);
 
+  const updateInner = useCallback((inst: TitleInner | null) => {
+    inner.current = inst;
+    setBarWidth(inst?.width ?? 0);
+  }, [])
+
   return (
     <div className="list-entry" onClick={trigger}>
       <div className="list-entry-date">2020-02-02</div>
-      {!hidden && (
-        <Title spec={spec} ref={inner} />
-      )}
+      <Title spec={spec} ref={updateInner} className={clsx({ 'list-entry-canvas-hidden': hidden })} />
+      <div className="list-entry-bar" style={{
+        width: `${barWidth}px`,
+      }}></div>
     </div>
   )
 });

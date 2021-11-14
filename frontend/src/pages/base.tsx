@@ -15,12 +15,12 @@ const Base = React.memo((): ReactElement => {
     <>
       <TransitionGroup>
         {aboutMatch && (
-          <CSSTransition key="about" timeout={1000} classNames="pages">
+          <CSSTransition key="about" timeout={750} classNames="pages">
             <About />
           </CSSTransition>
         )}
         {indexMatch && (
-          <CSSTransition key="index" timeout={1000} classNames="pages">
+          <CSSTransition key="index" timeout={750} classNames="pages">
             <List />
           </CSSTransition>
         )}

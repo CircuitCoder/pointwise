@@ -8,16 +8,20 @@ const Render = import('pointwise-render');
 type Props = {
   // TODO: statically typecheck spec
   spec: any,
+  className?: string,
 }
 
 export type TitleInner = {
   title: LayoutedTitle,
   canvas: HTMLCanvasElement,
+  width: number,
 }
 
-const Title = React.memo(React.forwardRef<TitleInner, Props>(({ spec }, ref): ReactElement => {
+const Title = React.memo(React.forwardRef<TitleInner, Props>(({ spec, className }, ref): ReactElement => {
   const global = useContext(Ctx);
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
+
+  const [width, setWidth] = useState(0);
 
   // TODO: figure out a way to handle WASM free
 
@@ -35,7 +39,8 @@ const Title = React.memo(React.forwardRef<TitleInner, Props>(({ spec }, ref): Re
     const ctx = canvas.getContext('2d');
     if(!ctx) return;
     let now = performance.now();
-    global.render.render(title, ctx, now);
+    const width = global.render.render(title, ctx, now);
+    setWidth(width);
 
     setCanvas(canvas);
   }, [title, global?.render]);
@@ -43,15 +48,15 @@ const Title = React.memo(React.forwardRef<TitleInner, Props>(({ spec }, ref): Re
   const inner = useMemo(() => {
     console.log('Update inner', title, canvas);
     if(title && canvas) return {
-      title, canvas,
+      title, canvas, width,
     };
     return null;
-  }, [canvas, title]);
+  }, [canvas, title, width]);
 
   useRefValue(ref, inner, [inner]);
 
   return (
-    <canvas ref={setup}></canvas>
+    <canvas ref={setup} className={className}></canvas>
   );
 }));
 
