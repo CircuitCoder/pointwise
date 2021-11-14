@@ -1,16 +1,13 @@
-import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
-
-import SPEC from './test.json';
 import { LayoutedTitle } from 'pointwise-render';
+import Route, { NavLink } from 'react-router-dom';
 
 import BrandDot from './comps/BrandDot';
 
 import React from 'react';
 import TitleLayer, { TitleLayerInterface } from './comps/TitleLayer';
-import ListEnt from './comps/ListEnt';
-import { setup } from './shaders';
 import { kickoff } from './dispatch';
+import Base from './pages/base';
 
 const Render = import('pointwise-render');
 
@@ -61,7 +58,6 @@ export default function App(): JSX.Element {
  }, []);
 
   const [hidden, setHidden] = useState(true);
-  const [showingAbout, setShowingAbout] = useState(false);
 
   const [titleLayer, setTitleLayer] = useState<TitleLayerInterface | null>(null);
 
@@ -89,64 +85,19 @@ export default function App(): JSX.Element {
                 </h1>
 
                 <nav>
-                  <a onClick={() => setShowingAbout(false)}>文章</a>
+                  <NavLink to="/">文章</NavLink>
                   <span className="nav-split">/</span>
                   <a>索引</a>
                   <span className="nav-split">/</span>
-                  <a onClick={() => setShowingAbout(true)}>关于</a>
+                  <NavLink to="/about">关于</NavLink>
                 </nav>
               </div>
             </div>
             <nav></nav>
           </header>
 
-
-          <div className={clsx("list", { 'list-shown': !showingAbout })}>
-            <ListEnt spec={SPEC} />
-          </div>
+          <Base />
         </div>
-
-        <div className={clsx("post", { 'post-hidden': hidden })}>
-          <div className="post-inner">
-            <div className="post-meta">
-              <div className="post-author">
-                <img src="https://lh3.googleusercontent.com/a-/AOh14Gh_MGK0Bw_K_pZ2kMQ-UFnybSQbS2NSBn8m0fB7lg=s96-c" />
-                <div className="post-author-img-mask" />
-                <div className="post-author-info">
-                  <div className="post-author-name">
-                    喵喵 🍓
-                  </div>
-                  <div className="post-author-tool">
-                    w/ 猫爪子
-                  </div>
-                </div>
-              </div>
-
-              <div className="post-meta-icon">
-                <i className="material-icons">access_time</i>
-              </div>
-              <div className="post-time">
-                <div className="post-time-date">
-                  2020-02-02
-                </div>
-                <div className="post-time-time">
-                  08:00:00
-                </div>
-                <div className="post-time-time">
-                  edit @ +43d
-                </div>
-              </div>
-
-              <div className="post-meta-icon">
-                <i className="material-icons">style</i>
-              </div>
-            </div>
-            <div className="post-content">
-              Test
-            </div>
-          </div>
-        </div>
-
       </Ctx.Provider>
     </div>
   );

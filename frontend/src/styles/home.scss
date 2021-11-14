@@ -62,6 +62,7 @@ $brand-dot-aurora-overflow: -150px;
 .column {
   max-width: 1200px;
   padding: 60px 80px;
+  padding-bottom: 200px;
   margin: 0 auto;
 }
 
@@ -81,6 +82,7 @@ nav {
     cursor: pointer;
     opacity: .54;
     transition: opacity .2s ease;
+    color: black;
 
     &:hover {
       opacity: 1;

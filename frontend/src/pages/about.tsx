@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
-import ImgAboutArrow from './assets/arrow.svg';
+import ImgAboutArrow from '../assets/arrow.svg';
 
-const TitleLayer = React.memo((): ReactElement => {
+const About = React.memo((): ReactElement => {
   return (
     <div className="page about">
       <img src={ImgAboutArrow} className="about-arrow" />
@@ -32,3 +32,5 @@ const TitleLayer = React.memo((): ReactElement => {
     </div>
   );
 });
+
+export default About;

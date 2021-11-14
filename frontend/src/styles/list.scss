@@ -21,17 +21,6 @@
 
   canvas {
     width: 100%;
-  }
-}
-
-.list {
-  transform: translateY(50px);
-  opacity: 0;
-  transition: transform .5s ease-in, opacity .5s ease-in;
-  &-shown {
-    transition-delay: .25s;
-    transition-timing-function: ease-out;
-    transform: none;
-    opacity: 1;
+    height: 44px;
   }
 }
