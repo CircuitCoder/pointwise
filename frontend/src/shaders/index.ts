@@ -34,7 +34,11 @@ export function setup(canvas: HTMLCanvasElement, patch: number): Program {
 
   const gl = getGL(canvas);
 
-  const input = createTexture(gl, width, height);
+  const ext = gl.getExtension('EXT_color_buffer_float');
+  if(!ext)
+    throw new Error('WebGL context doesn\'t support EXT_color_buffer_float')
+
+  const input = createTexture(gl, width, height, false);
 
   const reducedHeight = Math.ceil(height / patch);
   const reducedWidth = Math.ceil(width / patch);
@@ -69,7 +73,7 @@ export function render(prog: Program, input: HTMLCanvasElement | HTMLImageElemen
     gl.UNSIGNED_BYTE,
     input,
   );
-  gl.generateMipmap(gl.TEXTURE_2D);
+  // gl.generateMipmap(gl.TEXTURE_2D);
 
   for(const stage of stages)
     renderStage(gl, stage);
@@ -161,7 +165,7 @@ function buildCircleFilter(gl: WebGL2RenderingContext, avg: WebGLTexture, width:
   );
 }
 
-function createTexture(gl: WebGL2RenderingContext, width: number, height: number, withMipmap = false): WebGLTexture {
+function createTexture(gl: WebGL2RenderingContext, width: number, height: number, isFloat = true, withMipmap = false): WebGLTexture {
   // From https://webgl2fundamentals.org/webgl/lessons/webgl-render-to-texture.html
   const texture = gl.createTexture();
   if(!texture) throw new Error('Unable to create texture');
@@ -170,10 +174,10 @@ function createTexture(gl: WebGL2RenderingContext, width: number, height: number
   gl.texImage2D(
     gl.TEXTURE_2D,
     0,
-    gl.RGBA,
+    isFloat ? gl.RGBA32F : gl.RGBA,
     width, height, 0,
     gl.RGBA,
-    gl.UNSIGNED_BYTE,
+    isFloat ? gl.FLOAT : gl.UNSIGNED_BYTE,
     null
   );
 
@@ -184,7 +188,7 @@ function createTexture(gl: WebGL2RenderingContext, width: number, height: number
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
   }
 
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); // TODO: zero?
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
   return texture;
@@ -223,6 +227,10 @@ function createRenderer(
     0
   );
 
+  const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  if (status != gl.FRAMEBUFFER_COMPLETE)
+    throw new Error("can not render to floating point textures");
+
   gl.viewport(0, 0, width, height);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -241,8 +249,15 @@ function createRenderer(
 function renderStage(gl: WebGL2RenderingContext, stage: Stage, params: Record<string, any> = {}) {
   gl.useProgram(stage.prog);
   gl.viewport(0, 0, stage.width, stage.height);
+
   if(!stage.final) gl.bindFramebuffer(gl.FRAMEBUFFER, stage.fbo);
   else gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+  const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  if (status != gl.FRAMEBUFFER_COMPLETE)
+    throw new Error("can not render to floating point textures");
+
+  // gl.renderbufferStorage(gl.RENDERBUFFER, gl.RGBA32F, stage.width, stage.height);
   stage.setup(gl, stage, params);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }

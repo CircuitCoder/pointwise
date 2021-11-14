@@ -1,0 +1,22 @@
+.pages-enter {
+  opacity: 0;
+  transform: translateY(-50px);
+}
+.pages-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  position: absolute;
+  transition: transform .5s ease-out, opacity .5s ease-out;
+  transition-delay: .25s;
+}
+
+.pages-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.pages-exit-active {
+  transform: translateY(-50px);
+  opacity: 0;
+  position: absolute;
+  transition: transform .5s ease-in, opacity .5s ease-in;
+}

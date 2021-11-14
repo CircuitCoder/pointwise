@@ -15,13 +15,20 @@ uniform int ksize;
 
 #define PROCESS(level, i) if(enables[i]) result = process_loop_with(level, i, result, base, bias);
 
+float alphaScale(float alpha) {
+  return alpha;
+}
+
 vec4 colorWeightedSum(vec4 a, vec4 b) {
-  float sum = a[3] + b[3];
+  float aa = alphaScale(a[3]);
+  float ba = alphaScale(b[3]);
+
+  float sum = aa + ba;
   if(sum < 1e-6) return vec4(0, 0, 0, 0);
   return vec4(
-    (a[0] * a[3] + b[0] * b[3]) / sum,
-    (a[1] * a[3] + b[1] * b[3]) / sum,
-    (a[2] * a[3] + b[2] * b[3]) / sum,
+    (a[0] * aa + b[0] * ba) / sum,
+    (a[1] * aa + b[1] * ba) / sum,
+    (a[2] * aa + b[2] * ba) / sum,
     sum
   );
 }

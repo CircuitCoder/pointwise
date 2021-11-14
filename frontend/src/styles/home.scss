@@ -59,13 +59,6 @@ $brand-dot-aurora-overflow: -150px;
   }
 }
 
-.column {
-  max-width: 1200px;
-  padding: 60px 80px;
-  padding-bottom: 200px;
-  margin: 0 auto;
-}
-
 nav {
   position: absolute;
   top: 100%;
@@ -94,4 +87,20 @@ nav {
   margin: 0 20px;
   @include monospace;
   opacity: .38;
+}
+
+.column {
+  max-width: 1200px;
+  padding: 60px 80px;
+  position: relative;
+  margin: 0 auto;
+}
+
+
+.page {
+  position: absolute;
+  top: 450px + 60px;
+  left: 80px;
+  right: 80px;
+  padding-bottom: 200px;
 }

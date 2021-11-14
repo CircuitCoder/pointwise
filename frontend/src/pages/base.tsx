@@ -1,23 +1,30 @@
 import React, { ReactElement } from 'react';
-import { useRoutes } from 'react-router-dom';
+import { useMatch, useRoutes } from 'react-router-dom';
 import About from './about';
 import List from './list';
+import { TransitionGroup, CSSTransition } from 'react-transition-group';
 
 const Base = React.memo((): ReactElement => {
-  const specialPage = useRoutes([
-    {
-      path: '/about',
-      element: <About />,
-    },
-    {
-      path: '/',
-      element: <List />,
-    }
-  ]);
+  const aboutMatch = useMatch('/about');
+  const indexMatch = useMatch({
+    path: '/',
+    end: true,
+  });
 
   return (
     <>
-      {specialPage}
+      <TransitionGroup>
+        {aboutMatch && (
+          <CSSTransition key="about" timeout={1000} classNames="pages">
+            <About />
+          </CSSTransition>
+        )}
+        {indexMatch && (
+          <CSSTransition key="index" timeout={1000} classNames="pages">
+            <List />
+          </CSSTransition>
+        )}
+      </TransitionGroup>
     </>
   )
 });

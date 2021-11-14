@@ -5,7 +5,7 @@ import SPEC from '../test.json';
 
 const List = React.memo((): ReactElement => {
   return (
-    <div className="list">
+    <div className="page list">
       <ListEnt spec={SPEC} />
     </div>
   );

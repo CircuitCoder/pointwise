@@ -38,6 +38,7 @@
     ]
   },
   "devDependencies": {
+    "@types/react-transition-group": "^4.4.4",
     "prettier": "^2.4.1",
     "raw-loader": "^4.0.2",
     "wasm-loader": "^1.3.0"

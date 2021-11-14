@@ -16,11 +16,11 @@ void main() {
     avg, avgCoord, 0
   );
   float fillRatio = avgLookup[3] / ksize[0] / ksize[1];
-  float fillFactor = fillRatio * ksize[0] * ksize[1];
-  float eff = exp(fillFactor);
-  float enff = exp(-fillFactor);
+  float radiusFactor = fillRatio * 10.;
+  float eff = exp(radiusFactor);
+  float enff = exp(-radiusFactor);
   float tanhff = (eff - enff) / (eff + enff);
-  float radius = tanhff * min(ksize[0], ksize[1]) * 0.3; // TODO: make 0.8 an uniform variable
+  float radius = (1. + tanhff) / 2. * min(ksize[0], ksize[1]) * 0.70710678118 / 2.;
 
   vec2 center = vec2(
     float(avgCoord[0]) * ksize[0] + ksize[0] / 2. - 0.5,
@@ -31,7 +31,7 @@ void main() {
   float dy = gl_FragCoord[1] - center[1];
   float dist = sqrt(dx * dx + dy * dy);
 
-  float alpha = clamp((radius - dist) / 2., 0., 1.) * 0.5;
+  float alpha = clamp((radius - dist) / 2., 0., 1.) * fillRatio * 2.;
 
   color = vec4(avgLookup[0], avgLookup[1], avgLookup[2], alpha);
 }
