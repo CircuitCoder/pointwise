@@ -3,7 +3,7 @@ import React, { ReactElement, useCallback, useEffect, useState } from 'react';
 const DOT_FLICKER_INTERVAL = 100;
 const DOT_FLICKER_MAX = 0.1;
 
-const TitleDot = React.memo((): ReactElement => {
+const BrandDot = React.memo((): ReactElement => {
   const setDot = useCallback((dot: HTMLDivElement) => {
     const tick = () => {
       const delta = Math.random() * DOT_FLICKER_MAX;
@@ -48,4 +48,4 @@ const TitleDot = React.memo((): ReactElement => {
   );
 });
 
-export default TitleDot;
+export default BrandDot;

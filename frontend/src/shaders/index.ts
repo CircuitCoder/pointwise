@@ -5,7 +5,7 @@ import SHADER_CIRCLE from './circle.glsl';
 
 const LEVELS = 5;
 
-type Program = {
+export type Program = {
   input: WebGLTexture,
   stages: Stage[]
   gl: WebGL2RenderingContext,

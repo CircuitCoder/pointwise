@@ -342,7 +342,7 @@ impl LayoutedTitle {
 #[wasm_bindgen]
 pub fn prepare(spec: &JsValue) -> Result<LayoutedTitle, JsValue> {
     // TODO: use serde-wasm-bindgen
-    let spec: Vec<CharResp> = spec.into_serde().unwrap();
+    let spec: Vec<CharResp> = spec.into_serde().map_err(|_e| JsValue::from_str("Unable to parse input."))?;
 
     let chars: Vec<_> = spec
         .into_iter()
