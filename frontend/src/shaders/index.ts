@@ -142,7 +142,7 @@ function buildBinliftTower(gl: WebGL2RenderingContext, input: WebGLTexture, widt
 }
 
 function buildReducer(gl: WebGL2RenderingContext, levels: WebGLTexture[], width: number, height: number, patch: number, horizontal: boolean): Stage {
-  if(levels.length !== LEVELS) throw new Error('Currently only supports ${LEVELS} levels');
+  if(levels.length !== LEVELS) throw new Error(`Currently only supports ${LEVELS} levels`);
   const shaderReduce = compile(gl, SHADER_REDUCE);
   // FIXME: smaller 
   let outWidth = horizontal ? Math.ceil(width / patch) : width;

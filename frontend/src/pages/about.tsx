@@ -4,7 +4,7 @@ import ImgAboutArrow from '../assets/arrow.svg';
 const About = React.memo((): ReactElement => {
   return (
     <div className="page about">
-      <img src={ImgAboutArrow} className="about-arrow" />
+      <img src={ImgAboutArrow} className="about-arrow" alt="Arrow point at the red dot" />
       <h2>
         关于
         <small> :: SpeicalPage</small>

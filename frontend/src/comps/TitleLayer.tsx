@@ -5,9 +5,8 @@ import clsx from 'clsx';
 import { register, unregister } from '../dispatch';
 
 import * as Shaders from '../shaders';
-import { Ctx, GlobalCtx } from '../App';
+import { Ctx } from '../App';
 import { useSyncedRef } from '../utils';
-const Render = import('pointwise-render');
 
 export type TitleLayerInterface = {
   blowup: (title: Title, cur: DOMRect) => void,
@@ -70,12 +69,12 @@ const TitleLayer = React.memo(({ exp }: Props): ReactElement => {
         return new Promise(resolve => setTimeout(resolve, delay));
       }
     };
-  }, [global?.render]);
+  }, []);
 
 
   useEffect(() => {
     exp(int);
-  }, [exp]);
+  }, [exp, int]);
 
   const setupCanvas = useCallback((canvas: HTMLCanvasElement) => {
     canvas.width = window.innerWidth;
@@ -112,7 +111,7 @@ const TitleLayer = React.memo(({ exp }: Props): ReactElement => {
     return () => {
       unregister('title-layer-animation', tick);
     };
-  }, []);
+  }, [global]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <>
     <div className={clsx(

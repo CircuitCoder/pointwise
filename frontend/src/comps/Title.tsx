@@ -1,9 +1,7 @@
 import { Title as InnerTitle } from 'pointwise-render';
-import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { ReactElement, useCallback, useContext, useMemo, useState } from 'react';
 import { Ctx } from '../App';
 import { useRefValue } from '../utils';
-
-const Render = import('pointwise-render');
 
 type Props = {
   // TODO: statically typecheck spec
@@ -28,7 +26,7 @@ const Title = React.memo(React.forwardRef<TitleInner, Props>(({ spec, className 
   const title = useMemo(() => {
     if(!global) return null;
     return new global.render.Title(spec);
-  }, [spec, global?.render]);
+  }, [global, spec, global?.render]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setup = useCallback((canvas: HTMLCanvasElement | null) => {
     if(!title || !canvas) return;

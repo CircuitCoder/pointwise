@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Title } from 'pointwise-render';
-import Route, { NavLink } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink } from 'react-router-dom';
 
 import BrandDot from './comps/BrandDot';
 
@@ -27,8 +26,6 @@ export type GlobalCtx = {
 export const Ctx = React.createContext<GlobalCtx | null>(null);
 
 export default function App(): JSX.Element {
-  const title = useRef<Title>();
-  const titleElem = useRef<HTMLCanvasElement>();
   const [render, setRender] = useState<Awaited<typeof Render> | null>(null);
 
   useEffect(() => {
@@ -64,7 +61,7 @@ export default function App(): JSX.Element {
                 <nav>
                   <NavLink to="/">文章</NavLink>
                   <span className="nav-split">/</span>
-                  <a>索引</a>
+                  <NavLink to="/taxonomy">索引</NavLink>
                   <span className="nav-split">/</span>
                   <NavLink to="/about">关于</NavLink>
                 </nav>

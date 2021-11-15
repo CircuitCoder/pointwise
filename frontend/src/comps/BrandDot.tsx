@@ -1,4 +1,4 @@
-import React, { ReactElement, useCallback, useEffect, useState } from 'react';
+import React, { ReactElement, useCallback } from 'react';
 
 const DOT_FLICKER_INTERVAL = 100;
 const DOT_FLICKER_MAX = 0.1;

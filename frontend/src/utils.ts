@@ -9,7 +9,7 @@ export function useRefValue<T>(ref: null | MutableRefObject<T | null> | ((t: T |
     } else {
       ref.current = val;
     }
-  }, [ref, ...dep]);
+  }, [ref, ...dep]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 export function useSyncedRef<T>(input: T): RefObject<T> {
