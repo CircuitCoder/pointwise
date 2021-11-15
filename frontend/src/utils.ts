@@ -1,4 +1,4 @@
-import { MutableRefObject, useLayoutEffect } from "react";
+import { MutableRefObject, RefObject, useEffect, useLayoutEffect, useRef } from "react";
 
 export function useRefValue<T>(ref: null | MutableRefObject<T | null> | ((t: T | null) => void), val: T | null, dep: any[]) {
   useLayoutEffect(() => {
@@ -10,4 +10,13 @@ export function useRefValue<T>(ref: null | MutableRefObject<T | null> | ((t: T |
       ref.current = val;
     }
   }, [ref, ...dep]);
+}
+
+export function useSyncedRef<T>(input: T): RefObject<T> {
+  const ref = useRef(input);
+
+  useEffect(() => {
+    ref.current = input;
+  }, [input]);
+  return ref;
 }

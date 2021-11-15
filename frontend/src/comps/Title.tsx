@@ -1,4 +1,4 @@
-import { LayoutedTitle } from 'pointwise-render';
+import { Title as InnerTitle } from 'pointwise-render';
 import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Ctx } from '../App';
 import { useRefValue } from '../utils';
@@ -12,7 +12,7 @@ type Props = {
 }
 
 export type TitleInner = {
-  title: LayoutedTitle,
+  title: InnerTitle,
   canvas: HTMLCanvasElement,
   width: number,
 }
@@ -26,11 +26,12 @@ const Title = React.memo(React.forwardRef<TitleInner, Props>(({ spec, className 
   // TODO: figure out a way to handle WASM free
 
   const title = useMemo(() => {
-    return global?.render.prepare(spec);
+    if(!global) return null;
+    return new global.render.Title(spec);
   }, [spec, global?.render]);
 
   const setup = useCallback((canvas: HTMLCanvasElement | null) => {
-    if(!title || !global?.render || !canvas) return;
+    if(!title || !canvas) return;
 
     const size = canvas.getBoundingClientRect();
     canvas.width = size.width;
@@ -39,11 +40,11 @@ const Title = React.memo(React.forwardRef<TitleInner, Props>(({ spec, className 
     const ctx = canvas.getContext('2d');
     if(!ctx) return;
     let now = performance.now();
-    const width = global.render.render(title, ctx, now);
+    const width = title.render(ctx, now);
     setWidth(width);
 
     setCanvas(canvas);
-  }, [title, global?.render]);
+  }, [title]);
 
   const inner = useMemo(() => {
     console.log('Update inner', title, canvas);

@@ -1,6 +1,6 @@
 use pointwise_common::font::{BBox, Outline, OutlineCmd};
-use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement};
+use wasm_bindgen::prelude::*;
+use web_sys::CanvasRenderingContext2d;
 
 pub fn path(spec: &Outline, bbox: &BBox, ctx: &CanvasRenderingContext2d) -> Result<(), JsValue> {
     ctx.begin_path();

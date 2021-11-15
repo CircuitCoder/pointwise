@@ -4,7 +4,6 @@ use rand::{distributions::Uniform, prelude::Distribution, Rng};
 use wasm_bindgen::prelude::*;
 use web_sys::{window, CanvasRenderingContext2d};
 
-#[wasm_bindgen]
 struct LayoutedComp {
     outline: Outline,
 
@@ -161,7 +160,6 @@ impl LayoutedComp {
     }
 }
 
-#[wasm_bindgen]
 struct LayoutedChar {
     comps: Vec<LayoutedComp>,
 
@@ -260,7 +258,6 @@ impl LayoutedChar {
     }
 }
 
-#[wasm_bindgen]
 pub struct LayoutedTitle {
     chars: Vec<LayoutedChar>,
     base_size: f64,
@@ -343,72 +340,82 @@ impl LayoutedTitle {
     }
 }
 
-#[wasm_bindgen]
-pub fn prepare(spec: &JsValue) -> Result<LayoutedTitle, JsValue> {
-    // TODO: use serde-wasm-bindgen
-    let spec: Vec<CharResp> = spec.into_serde().map_err(|_e| JsValue::from_str("Unable to parse input."))?;
+#[wasm_bindgen(js_name = "Title")]
+pub struct ExportedTitle {
+    inner: LayoutedTitle,
+}
 
-    let chars: Vec<_> = spec
-        .into_iter()
-        .map(|c| -> Result<LayoutedChar, JsValue> {
-            let comps: Vec<_> = c
-                .components
-                .into_iter()
-                .map(|outline| -> Result<LayoutedComp, JsValue> {
-                    Ok(LayoutedComp::new(outline))
-                    // layout.rendered.append_inner_to_elem("canvas-debug")?;
-                    // result.push(JsValue::from(cur))
-                })
-                .collect::<Result<_, _>>()?;
+#[wasm_bindgen(js_class = "Title")]
+impl ExportedTitle {
+    #[wasm_bindgen(constructor)]
+    pub fn new(spec: &JsValue) -> Result<ExportedTitle, JsValue> {
+        console_error_panic_hook::set_once();
 
-            let c = LayoutedChar {
-                comps,
-                size: CubicBezierTiming::still(FONT_SIZE_LIST),
+        // TODO: use serde-wasm-bindgen
+        let spec: Vec<CharResp> = spec.into_serde().map_err(|_e| JsValue::from_str("Unable to parse input."))?;
 
-                dx: CubicBezierTiming::still(0f64),
-                dy: CubicBezierTiming::still(0f64),
+        let chars: Vec<_> = spec
+            .into_iter()
+            .map(|c| -> Result<LayoutedChar, JsValue> {
+                let comps: Vec<_> = c
+                    .components
+                    .into_iter()
+                    .map(|outline| -> Result<LayoutedComp, JsValue> {
+                        Ok(LayoutedComp::new(outline))
+                        // layout.rendered.append_inner_to_elem("canvas-debug")?;
+                        // result.push(JsValue::from(cur))
+                    })
+                    .collect::<Result<_, _>>()?;
 
-                em: c.em,
-                bbox: c.bbox,
-                char: c.char,
-            };
+                let c = LayoutedChar {
+                    comps,
+                    size: CubicBezierTiming::still(FONT_SIZE_LIST),
 
-            Ok(c)
+                    dx: CubicBezierTiming::still(0f64),
+                    dy: CubicBezierTiming::still(0f64),
+
+                    em: c.em,
+                    bbox: c.bbox,
+                    char: c.char,
+                };
+
+                Ok(c)
+            })
+            .collect::<Result<_, _>>()?;
+
+        let title = LayoutedTitle {
+            chars,
+
+            base_size: FONT_SIZE_LIST, // TODO: update me
+            dx: CubicBezierTiming::still(0f64),
+            dy: CubicBezierTiming::still(0f64),
+        };
+
+        Ok(Self {
+            inner: title
         })
-        .collect::<Result<_, _>>()?;
+    }
 
-    let title = LayoutedTitle {
-        chars,
+    pub fn render(
+        &self,
+        ctx: &CanvasRenderingContext2d,
+        time: f64,
+    ) -> Result<f64, JsValue> {
+        self.inner.render_to(ctx, time)
+    }
 
-        base_size: FONT_SIZE_LIST, // TODO: update me
-        dx: CubicBezierTiming::still(0f64),
-        dy: CubicBezierTiming::still(0f64),
-    };
+    pub fn blowup(&mut self, fx: f64, fy: f64, time: f64) -> Result<(), JsValue> {
+        let mut rng = rand::thread_rng();
+        let vw = window().unwrap().inner_width()?.as_f64().unwrap();
+        let vh = window().unwrap().inner_height()?.as_f64().unwrap();
 
-    Ok(title)
-}
+        self.inner.blowup(&mut rng, fx, fy, vw, vh, time);
 
-#[wasm_bindgen]
-pub fn render(
-    spec: &LayoutedTitle,
-    ctx: &CanvasRenderingContext2d,
-    time: f64,
-) -> Result<f64, JsValue> {
-    spec.render_to(ctx, time)
-}
+        Ok(())
+    }
 
-#[wasm_bindgen]
-pub fn blowup(title: &mut LayoutedTitle, fx: f64, fy: f64, time: f64) -> Result<(), JsValue> {
-    let mut rng = rand::thread_rng();
-    let vw = window().unwrap().inner_width()?.as_f64().unwrap();
-    let vh = window().unwrap().inner_height()?.as_f64().unwrap();
+    pub fn condense(&mut self, time: f64) -> Result<f64, JsValue> {
+        Ok(self.inner.condense(time))
+    }
 
-    title.blowup(&mut rng, fx, fy, vw, vh, time);
-
-    Ok(())
-}
-
-#[wasm_bindgen]
-pub fn condense(title: &mut LayoutedTitle, time: f64) -> Result<f64, JsValue> {
-    Ok(title.condense(time))
 }

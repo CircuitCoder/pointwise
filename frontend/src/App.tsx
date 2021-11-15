@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { LayoutedTitle } from 'pointwise-render';
+import { Title } from 'pointwise-render';
 import Route, { NavLink } from 'react-router-dom';
 
 import BrandDot from './comps/BrandDot';
@@ -27,37 +27,14 @@ export type GlobalCtx = {
 export const Ctx = React.createContext<GlobalCtx | null>(null);
 
 export default function App(): JSX.Element {
-  const title = useRef<LayoutedTitle>();
+  const title = useRef<Title>();
   const titleElem = useRef<HTMLCanvasElement>();
   const [render, setRender] = useState<Awaited<typeof Render> | null>(null);
 
-  /*
-  const startup = useCallback((local: HTMLCanvasElement) => {
-    Render.then(r => {
-      render.current = r;
-
-      // TODO: move into comp
-      const t = r.prepare(SPEC);
-      title.current = t;
-      titleElem.current = local;
-
-      const localSize = local.getBoundingClientRect();
-      local.width = localSize.width;
-      local.height = localSize.height;
-
-      const localCtx = local.getContext('2d');
-      if(!localCtx) return;
-      let now = performance.now();
-      r.render(t, localCtx, now);
-    });
+  useEffect(() => {
+    Render.then(setRender);
+    kickoff();
   }, []);
-  */
- useEffect(() => {
-   Render.then(setRender);
-   kickoff();
- }, []);
-
-  const [hidden, setHidden] = useState(true);
 
   const [titleLayer, setTitleLayer] = useState<TitleLayerInterface | null>(null);
 
