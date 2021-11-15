@@ -65,15 +65,7 @@ export function render(prog: Program, input: HTMLCanvasElement | HTMLImageElemen
 
   // gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(
-    gl.TEXTURE_2D,
-    0,
-    gl.RGBA,
-    gl.RGBA,
-    gl.UNSIGNED_BYTE,
-    input,
-  );
-  // gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, input.width, input.height, gl.RGBA, gl.UNSIGNED_BYTE, input);
 
   for(const stage of stages)
     renderStage(gl, stage);
@@ -165,35 +157,25 @@ function buildCircleFilter(gl: WebGL2RenderingContext, avg: WebGLTexture, width:
   );
 }
 
-function createTexture(gl: WebGL2RenderingContext, width: number, height: number, isFloat = true, withMipmap = false): WebGLTexture {
+function createTexture(gl: WebGL2RenderingContext, width: number, height: number, isFloat = true): WebGLTexture {
   // From https://webgl2fundamentals.org/webgl/lessons/webgl-render-to-texture.html
   const texture = gl.createTexture();
   if(!texture) throw new Error('Unable to create texture');
   gl.bindTexture(gl.TEXTURE_2D, texture);
 
-  gl.texImage2D(
-    gl.TEXTURE_2D,
-    0,
-    isFloat ? gl.RGBA32F : gl.RGBA,
-    width, height, 0,
-    gl.RGBA,
-    isFloat ? gl.FLOAT : gl.UNSIGNED_BYTE,
-    null
-  );
+  console.log('Create texture');
+  gl.texStorage2D(gl.TEXTURE_2D, 1, isFloat ? gl.RGBA32F : gl.RGBA8, width, height);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGBA, isFloat ? gl.FLOAT : gl.UNSIGNED_BYTE, null);
+  // gl.texImage2D(gl.TEXTURE_2D, 0, isFloat ? gl.RGBA32F : gl.RGBA8, width, height, 0, gl.RGBA, isFloat ? gl.FLOAT : gl.UNSIGNED_BYTE, null);
 
-  if(!withMipmap) {
-    // set the filtering so we don't need mips
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  } else {
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-  }
-
+  // set the filtering so we don't need mips
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); // TODO: zero?
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
   return texture;
 }
-
 
 function createRenderer(
   gl: WebGL2RenderingContext,
@@ -228,7 +210,7 @@ function createRenderer(
   );
 
   const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-  if (status != gl.FRAMEBUFFER_COMPLETE)
+  if (status !== gl.FRAMEBUFFER_COMPLETE)
     throw new Error("can not render to floating point textures");
 
   gl.viewport(0, 0, width, height);
@@ -246,7 +228,7 @@ function createRenderer(
   };
 }
 
-function renderStage(gl: WebGL2RenderingContext, stage: Stage, params: Record<string, any> = {}) {
+function renderStage(gl: WebGL2RenderingContext, stage: Stage, params: Record<string, any> = {}, debug = false) {
   gl.useProgram(stage.prog);
   gl.viewport(0, 0, stage.width, stage.height);
 
@@ -254,12 +236,21 @@ function renderStage(gl: WebGL2RenderingContext, stage: Stage, params: Record<st
   else gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
   const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-  if (status != gl.FRAMEBUFFER_COMPLETE)
+  if (status !== gl.FRAMEBUFFER_COMPLETE)
     throw new Error("can not render to floating point textures");
 
-  // gl.renderbufferStorage(gl.RENDERBUFFER, gl.RGBA32F, stage.width, stage.height);
   stage.setup(gl, stage, params);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+  // Debug
+  if(debug) {
+    const buffer = new Float32Array(stage.width * stage.height * 4);
+    gl.readPixels(0, 0, stage.width, stage.height, gl.RGBA, gl.FLOAT, buffer);
+    console.log(buffer);
+    const max = buffer.reduce((acc, e) => Math.max(acc, e), 0);
+    console.log('Max component: ', max);
+    if(max < 1e-5) console.warn('Framebuffer is empty');
+  }
 }
 
 function attachTexture(gl: WebGL2RenderingContext, texture: WebGLTexture, idx: number) {

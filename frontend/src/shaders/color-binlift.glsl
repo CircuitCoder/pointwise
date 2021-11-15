@@ -28,7 +28,7 @@ vec4 colorWeightedSum(vec4 a, vec4 b) {
 
 void main() {
   vec4 cur = texelFetch(
-    last, ivec2(gl_FragCoord[0], gl_FragCoord[1]), 0
+    last, ivec2(gl_FragCoord), 0
   );
 
   ivec2 siblingCoord = ivec2(
