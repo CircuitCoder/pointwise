@@ -2,17 +2,28 @@ import SHADER_BINLIFT from './color-binlift.glsl';
 import SHADER_REDUCE from './color-reduce.glsl';
 import SHADER_COVER from './cover.glsl';
 import SHADER_CIRCLE from './circle.glsl';
+import { Random } from 'pointwise-render';
+import { Noise } from './noise';
 
 const LEVELS = 5;
+const NOISE_EPOCH_LEN = 500;
 
 export type Program = {
   input: WebGLTexture,
   stages: Stage[]
+
   gl: WebGL2RenderingContext,
   canvas: HTMLCanvasElement,
+  noise: Noise,
+  lastRender: DOMHighResTimeStamp,
 }
 
-type Setup = (gl: WebGL2RenderingContext, stage: Stage, params: Record<string, any>) => void;
+type Params = {
+  noise: Noise,
+  interp: number,
+}
+
+type Setup = (gl: WebGL2RenderingContext, stage: Stage, params: Params) => void;
 
 type Stage = {
   prog: WebGLProgram,
@@ -27,7 +38,7 @@ type Stage = {
   height: number,
 }
 
-export function setup(canvas: HTMLCanvasElement, patch: number): Program {
+export function setup(canvas: HTMLCanvasElement, patch: number, rng: Random, now: DOMHighResTimeStamp): Program {
   // TODO: build maximum size texture
   const width = canvas.width;
   const height = canvas.height;
@@ -56,19 +67,30 @@ export function setup(canvas: HTMLCanvasElement, patch: number): Program {
     stages: [...vertBinliftStages, vertReduceStage, ...hozBinliftStages, hozReduceStage, circleFilterStage],
     gl,
     canvas,
+    noise: new Noise(gl, rng, reducedWidth, reducedHeight, 0, 0.02),
+    lastRender: now,
   };
 }
 
-export function render(prog: Program, input: HTMLCanvasElement | HTMLImageElement) {
-  // Update texture
-  const { gl, input: texture, stages } = prog;
+export function render(prog: Program, input: HTMLCanvasElement | HTMLImageElement, now: DOMHighResTimeStamp) {
+  const { gl, input: texture, stages, noise, lastRender } = prog;
 
+  // Update noise
+  const lastEpoch = Math.floor(lastRender / NOISE_EPOCH_LEN);
+  const curEpoch = Math.floor(now / NOISE_EPOCH_LEN);
+  if(lastEpoch !== curEpoch) noise.swap(gl);
+  const dt = (now % NOISE_EPOCH_LEN) / NOISE_EPOCH_LEN;
+  const interp = 3 * dt * dt - 2 * dt * dt * dt;
+
+  // Update texture
   // gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, input.width, input.height, gl.RGBA, gl.UNSIGNED_BYTE, input);
 
   for(const stage of stages)
-    renderStage(gl, stage);
+    renderStage(gl, stage, { noise, interp });
+
+  prog.lastRender = now;
 }
 
 function getGL(canvas: HTMLCanvasElement): WebGL2RenderingContext {
@@ -147,25 +169,36 @@ function buildCircleFilter(gl: WebGL2RenderingContext, avg: WebGLTexture, width:
     shaderCircle,
     width,
     height,
-    (gl, stage) => {
+    (gl, stage, { noise, interp }) => {
       gl.uniform2f(stage.uniforms.ksize, patch, patch);
 
       attachTexture(gl, avg, 0)
+      attachTexture(gl, noise.cur, 1)
+      attachTexture(gl, noise.last, 2)
+
       gl.uniform1i(stage.uniforms.avg, 0);
+      gl.uniform1i(stage.uniforms.noiseCur, 1);
+      gl.uniform1i(stage.uniforms.noiseLast, 2);
+      gl.uniform1f(stage.uniforms.noiseInterp, interp);
     },
     true,
   );
 }
 
+// TODO(chore): move to utils
 function createTexture(gl: WebGL2RenderingContext, width: number, height: number, isFloat = true): WebGLTexture {
+  return createTextureInternal(gl, width, height, isFloat ? gl.RGBA32F : gl.RGBA8);
+}
+
+export function createTextureInternal(gl: WebGL2RenderingContext, width: number, height: number, intFmt: GLint): WebGLTexture {
   // From https://webgl2fundamentals.org/webgl/lessons/webgl-render-to-texture.html
   const texture = gl.createTexture();
   if(!texture) throw new Error('Unable to create texture');
   gl.bindTexture(gl.TEXTURE_2D, texture);
 
   console.log('Create texture');
-  gl.texStorage2D(gl.TEXTURE_2D, 1, isFloat ? gl.RGBA32F : gl.RGBA8, width, height);
-  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGBA, isFloat ? gl.FLOAT : gl.UNSIGNED_BYTE, null);
+  gl.texStorage2D(gl.TEXTURE_2D, 1, intFmt, width, height);
+  // gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RGBA, isFloat ? gl.FLOAT : gl.UNSIGNED_BYTE, null);
   // gl.texImage2D(gl.TEXTURE_2D, 0, isFloat ? gl.RGBA32F : gl.RGBA8, width, height, 0, gl.RGBA, isFloat ? gl.FLOAT : gl.UNSIGNED_BYTE, null);
 
   // set the filtering so we don't need mips
@@ -228,7 +261,7 @@ function createRenderer(
   };
 }
 
-function renderStage(gl: WebGL2RenderingContext, stage: Stage, params: Record<string, any> = {}, debug = false) {
+function renderStage(gl: WebGL2RenderingContext, stage: Stage, params: Params, debug = false) {
   gl.useProgram(stage.prog);
   gl.viewport(0, 0, stage.width, stage.height);
 

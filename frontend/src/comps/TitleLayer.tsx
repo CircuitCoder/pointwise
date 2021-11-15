@@ -85,12 +85,14 @@ const TitleLayer = React.memo(({ exp }: Props): ReactElement => {
   }, []);
 
   const setupShaded = useCallback((shaded: HTMLCanvasElement) => {
+    if(!global?.render) return;
+
     shaded.width = window.innerWidth;
     shaded.height = window.innerHeight;
-    progRef.current = Shaders.setup(shaded, 20);
+    progRef.current = Shaders.setup(shaded, 20, new global.render.Random(), performance.now());
 
     shadedRef.current = shaded;
-  }, []);
+  }, [global?.render]);
 
   useEffect(() => {
     if(!global) throw new Error('GlobalCtx not yet initialized');
@@ -103,7 +105,7 @@ const TitleLayer = React.memo(({ exp }: Props): ReactElement => {
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       title.current.render(ctx, ts);
 
-      Shaders.render(progRef.current, canvasRef.current);
+      Shaders.render(progRef.current, canvasRef.current, ts);
     };
 
     register('title-layer-animation', tick);

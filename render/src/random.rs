@@ -19,8 +19,8 @@ impl Random {
         })
     }
 
-    pub fn fill_noise_f32(&mut self, buffer: &mut [f32], stddev: f32) -> Result<(), JsValue> {
-        let dist = rand_distr::Normal::new(0f32, stddev).map_err(|_| JsValue::from_str("Unable to create normal distribution"))?;
+    pub fn fill_noise_f32(&mut self, buffer: &mut [f32], mean: f32, stddev: f32) -> Result<(), JsValue> {
+        let dist = rand_distr::Normal::new(mean, stddev).map_err(|_| JsValue::from_str("Unable to create normal distribution"))?;
         buffer.fill_with(|| {
             return dist.sample(&mut self.rng)
         });
