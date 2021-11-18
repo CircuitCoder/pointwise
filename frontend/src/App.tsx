@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
-
-import BrandDot from './comps/BrandDot';
+import { useEffect, useRef, useState } from 'react';
 
 import React from 'react';
 import TitleLayer, { TitleLayerInterface } from './comps/TitleLayer';
 import { kickoff } from './dispatch';
 import Base from './pages/base';
+import Header from './comps/Header';
 
 const Render = import('pointwise-render');
 
@@ -47,29 +45,7 @@ export default function App(): JSX.Element {
         <TitleLayer exp={setTitleLayer} />
 
         <div className="column">
-          <header>
-            <div className="brand">
-              <BrandDot />
-              <div className="brand-text">
-                <h1 className="brand-text-main">
-                  点测量
-                  <small>
-                    &nbsp;:: BlogOf&lt;Meow&gt;
-                  </small>
-                </h1>
-
-                <nav>
-                  <NavLink to="/">文章</NavLink>
-                  <span className="nav-split">/</span>
-                  <NavLink to="/taxonomy">索引</NavLink>
-                  <span className="nav-split">/</span>
-                  <NavLink to="/about">关于</NavLink>
-                </nav>
-              </div>
-            </div>
-            <nav></nav>
-          </header>
-
+          <Header />
           <Base />
         </div>
       </Ctx.Provider>

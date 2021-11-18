@@ -16,13 +16,23 @@ $brand-dot-aurora-overflow: -150px;
     border-radius: 50%;
   }
 
+  &-kernel-modifier {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    transition: transform .5s ease;
+  }
+
   &-kernel {
     background: rgba(255, 0, 0, 0.2);
-    border: 1px red solid;
+    border: 2px red solid;
 
-    position: absolute;
     box-shadow: rgba(0,0,0,.1) 0 2px 6px;
 
+    position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
@@ -32,16 +42,29 @@ $brand-dot-aurora-overflow: -150px;
   }
 }
 
+header {
+  margin-top: 100px;
+  height: 150px;
+  margin-bottom: 200px;
+
+  &.header-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    margin-top: 0;
+  }
+}
+
 .brand {
   display: flex;
   align-items: center;
-  margin-bottom: 200px;
-  margin-top: 100px;
 
   &-text {
     margin-left: 50px;
     flex: 1;
     position: relative;
+
+    transition: transform .5s ease-out, opacity .5s ease-out;
 
     &-main {
       @include serif;
@@ -70,6 +93,9 @@ nav {
   display: flex;
   align-items: center;
 
+  transition: transform .2s ease-out, opacity .2s ease-out;
+  transition-delay: .3s, .3s;
+
   a {
     text-decoration: none;;
     cursor: pointer;
@@ -80,6 +106,37 @@ nav {
     &:hover {
       opacity: 1;
     }
+
+    &.active {
+      opacity: 1;
+      cursor: default;
+    }
+  }
+}
+
+.header-fixed {
+  .brand-dot-kernel {
+    cursor: pointer;
+  }
+
+  .brand-text {
+    transition-timing-function: ease-in, ease-in;
+
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+
+  nav {
+    transition-timing-function: ease-in, ease-in;
+    transition-delay: 0s, 0s;
+
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+
+  .brand-dot-kernel-modifier {
+    transition-delay: .2s;
+    transform: scale(.5);
   }
 }
 
@@ -95,7 +152,6 @@ nav {
   position: relative;
   margin: 0 auto;
 }
-
 
 .page {
   position: absolute;

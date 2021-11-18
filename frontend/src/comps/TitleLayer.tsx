@@ -64,7 +64,7 @@ const TitleLayer = React.memo(({ exp }: Props): ReactElement => {
           if(s.tag !== StateTag.Blownup) return s;
 
           delay = s.title.condense(performance.now());
-          return { tag: StateTag.Blownup, title: s.title };
+          return { tag: StateTag.Condensed, title: s.title };
         });
         return new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -124,7 +124,6 @@ const TitleLayer = React.memo(({ exp }: Props): ReactElement => {
       'title-global-shaded-shown': state.tag === StateTag.Blownup,
     })}></canvas>
     <canvas id="title-global" ref={setupCanvas} className={clsx({
-      'title-global-hidden': state.tag === StateTag.Condensed,
       'title-global-clipped': state.tag === StateTag.Blownup,
     })}></canvas>
   </>;

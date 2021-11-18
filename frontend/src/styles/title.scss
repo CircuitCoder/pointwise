@@ -10,10 +10,6 @@ $shade-diag-dist: 200px;
   height: 100vh;
   pointer-events: none;
 
-  &.title-global-hidden {
-    opacity: 0;
-  }
-
   clip-path: polygon(0 0, calc(100% + #{$shade-diag-dist}) 0, 100% 100%, 0 100%);
   transition: clip-path 1.5s ease;
 

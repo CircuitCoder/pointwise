@@ -1,13 +1,7 @@
 @import './fonts.scss';
 
 .post {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-
-  padding: 300px 40px 40px 40px;
+  margin: 300px 40px 40px 40px;
   transition: opacity 2s ease, transform 2s ease;
 
   &-hidden {
@@ -29,18 +23,28 @@
   background: #EEE;
   display: flex;
   align-items: center;
+  border-top: rgba(0,0,0,.1) 10px solid;
 
   &-icon {
     width: 80px;
     height: 100%;
-    clip-path: polygon(20px 0, 100% 0, calc(100% - 20px) 100%, 0 100%);
-    background: rgba(0,0,0,.1);
     margin: 0 20px 0 40px;
 
-    .material-icons {
+    &-text {
+      font-family: 'Material Icons';
+      font-weight: normal;
+      font-style: normal;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+
       font-size: 100px;
       line-height: 100px;
-      color: #EEE;
     }
   }
 }

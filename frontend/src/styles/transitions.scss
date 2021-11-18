@@ -20,3 +20,13 @@
   position: absolute;
   transition: transform .5s ease-in, opacity .5s ease-in;
 }
+
+.blur-exit {
+}
+
+.blur-exit-active {
+  transform: scale(.8);
+  opacity: 0;
+  filter: blur(2px);
+  transition: transform .5s ease-in, opacity .5s ease-in, filter .5s ease;
+}

@@ -1,5 +1,6 @@
 import clsx from "clsx";
-import React, { ReactElement, useCallback, useContext, useRef, useState } from "react";
+import React, { ReactElement, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Ctx } from "../App";
 import Title, { TitleInner } from "./Title";
 
@@ -26,7 +27,12 @@ const ListEnt = React.memo(({ spec }: Props): ReactElement => {
   const updateInner = useCallback((inst: TitleInner | null) => {
     inner.current = inst;
     setBarWidth(inst?.width ?? 0);
-  }, [])
+  }, []);
+
+  const navigate = useNavigate();
+  useEffect(() => {
+    if(hidden) navigate('/post/test');
+  }, [hidden, navigate]);
 
   return (
     <div className="list-entry" onClick={trigger}>

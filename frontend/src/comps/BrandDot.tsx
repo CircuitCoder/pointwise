@@ -10,7 +10,8 @@ const BrandDot = React.memo((): ReactElement => {
 
       const children = dot.children;
       if(children.length >= 2) {
-        const [aurora, kernel] = Array.from(children);
+        const [aurora, kernelMod] = Array.from(children);
+        const kernel = kernelMod.children[0];
         aurora.animate([{}, {
           transform: `scale(${1 + delta})`,
         }], {
@@ -43,7 +44,9 @@ const BrandDot = React.memo((): ReactElement => {
   return (
     <div className="brand-dot" ref={setDot}>
       <div className="brand-dot-aurora"></div>
-      <div className="brand-dot-kernel"></div>
+      <div className="brand-dot-kernel-modifier">
+        <div className="brand-dot-kernel"></div>
+      </div>
     </div>
   );
 });
