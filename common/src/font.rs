@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 #[serde(rename_all = "lowercase")]
 pub enum OutlineCmd {
     Move(f64, f64),
@@ -46,7 +46,7 @@ impl OutlineCmd {
 
 pub type Outline = Vec<OutlineCmd>;
 
-#[derive(Serialize, Deserialize, Clone, Copy)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct BBox {
     pub top: f64,
     pub bottom: f64,
@@ -64,7 +64,7 @@ impl BBox {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CharResp {
     pub char: char,
     pub components: Vec<Outline>,

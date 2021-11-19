@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use lyon_path::PathEvent;
 use pointwise_common::font::*;
+use ttf_parser::Rect;
 
 fn split_closed_loop<I: Iterator<Item = OutlineCmd>>(outline: I) -> Vec<Outline> {
     let mut output = Vec::new();
@@ -213,9 +214,23 @@ pub fn parse_char(c: char, face: &ttf_parser::Face) -> anyhow::Result<CharResp> 
     // let mut char_resp = CharResp::new(c);
     let mut builder = OutlineBuilder::default();
 
-    let bbox = face
-        .outline_glyph(glyph, &mut builder)
-        .ok_or(anyhow::anyhow!("Glyph \"{}\" has corrupted outline.", c))?;
+    let bbox = match face
+        .outline_glyph(glyph, &mut builder) {
+            Some(bbox) => bbox,
+            None => {
+                log::warn!("Glyph \"{}\" has corrupted outline.", c);
+                // Manually craft an bbox
+                let adv = face.glyph_hor_advance(glyph).ok_or_else(|| anyhow::anyhow!("Glyph '{}' has no outline and hor adv", c))?;
+                let asc = face.ascender();
+                let dec = face.descender();
+                Rect {
+                    x_min: 0,
+                    y_min: adv as i16,
+                    x_max: asc,
+                    y_max: dec,
+                }
+            }
+        };
 
     let components = split_components(builder.outline);
 

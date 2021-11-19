@@ -2,13 +2,15 @@ use std::{collections::HashMap, os::unix::prelude::OsStrExt, path::Path};
 
 use chrono::TimeZone;
 use git2::Sort;
+use pointwise_common::font::CharResp;
 use regex::Regex;
+use serde::Serialize;
 
 use crate::post::md::ParsedMarkdown;
 
 mod md;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Post {
     pub metadata: Metadata,
     pub html: String,
@@ -16,16 +18,17 @@ pub struct Post {
 
 type DT = chrono::DateTime<chrono::FixedOffset>;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Metadata {
     pub url: String,
     pub title: String,
     pub tags: Vec<String>,
     pub publish_time: DT,
     pub update_time: Option<DT>,
+    pub title_outline: Vec<CharResp>,
 }
 
-pub fn readdir<P: AsRef<Path>>(dir: P) -> anyhow::Result<Vec<Post>> {
+pub fn readdir<P: AsRef<Path>>(dir: P, title_font: &ttf_parser::Face) -> anyhow::Result<Vec<Post>> {
     let entries = std::fs::read_dir(&dir)?;
     let mut pre: HashMap<String, (ParsedMarkdown, Option<DT>, Option<DT>)> = HashMap::new();
 
@@ -94,7 +97,7 @@ pub fn readdir<P: AsRef<Path>>(dir: P) -> anyhow::Result<Vec<Post>> {
 
     let filename_re = Regex::new(r"\d{4}-\d{2}-\d{2}-(.*)\.md").unwrap();
 
-    pre.into_iter()
+    let output: anyhow::Result<Vec<_>> = pre.into_iter()
         .map(
             |(filename, (pre, creation, update))| -> anyhow::Result<Post> {
                 let creation = if let Some(c) = creation {
@@ -114,6 +117,12 @@ pub fn readdir<P: AsRef<Path>>(dir: P) -> anyhow::Result<Vec<Post>> {
                     .ok_or_else(|| anyhow::anyhow!("Unable to parse filename: {}", filename))?;
                 let url = filename_match.get(0).unwrap().as_str();
 
+                let title_outline: anyhow::Result<Vec<_>> = pre.metadata.title
+                    .chars()
+                    .map(|c| crate::font::parse_char(c, title_font))
+                    .collect();
+                let title_outline = title_outline?;
+
                 Ok(Post {
                     html: pre.html,
                     metadata: Metadata {
@@ -122,9 +131,13 @@ pub fn readdir<P: AsRef<Path>>(dir: P) -> anyhow::Result<Vec<Post>> {
                         tags: pre.metadata.tags,
                         publish_time: pre.metadata.force_publish_time.unwrap_or(creation),
                         update_time: pre.metadata.force_update_time.or(update),
+                        title_outline,
                     },
                 })
             },
         )
-        .collect()
+        .collect();
+    let mut output = output?;
+    output.sort_by(|a, b| b.metadata.publish_time.cmp(&a.metadata.publish_time));
+    Ok(output)
 }
