@@ -5,7 +5,7 @@ use ttf_parser::Tag;
 
 #[derive(StructOpt)]
 struct Args {
-    /// Path to config file
+    /// Path to font file
     #[structopt(short, long)]
     font: PathBuf,
 

@@ -46,6 +46,7 @@ header {
   margin-top: 100px;
   height: 150px;
   margin-bottom: 200px;
+  width: max-content;
 
   &.header-fixed {
     position: fixed;
