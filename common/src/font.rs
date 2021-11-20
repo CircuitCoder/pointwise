@@ -2,6 +2,8 @@ use serde::Deserialize;
 use serde::Serialize;
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "typings", derive(ts_rs::TS))]
+#[cfg_attr(feature = "typings", ts(export, export_to = "../frontend/src/typings/OutlineCmd.ts"))]
 #[serde(rename_all = "lowercase")]
 pub enum OutlineCmd {
     Move(f64, f64),
@@ -47,6 +49,8 @@ impl OutlineCmd {
 pub type Outline = Vec<OutlineCmd>;
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+#[cfg_attr(feature = "typings", derive(ts_rs::TS))]
+#[cfg_attr(feature = "typings", ts(export, export_to = "../frontend/src/typings/BBox.ts"))]
 pub struct BBox {
     pub top: f64,
     pub bottom: f64,
@@ -65,9 +69,12 @@ impl BBox {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[cfg_attr(feature = "typings", derive(ts_rs::TS))]
+#[cfg_attr(feature = "typings", ts(export, export_to = "../frontend/src/typings/CharResp.ts"))]
 pub struct CharResp {
+    #[cfg_attr(feature = "typings", ts(type = "string"))]
     pub char: char,
-    pub components: Vec<Outline>,
+    pub components: Vec<Vec<OutlineCmd>>,
     pub bbox: BBox,
     pub em: usize,
 }
