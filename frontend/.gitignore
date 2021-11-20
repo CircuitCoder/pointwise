@@ -24,3 +24,4 @@ yarn-error.log*
 
 src/config.js
 src/test.json
+src/compiled

@@ -236,7 +236,12 @@ impl LayoutedChar {
         let x = self.dx.eval_at(time);
         let y = self.dy.eval_at(time);
 
-        ctx.transform(scale, 0f64, 0f64, scale, x, y)?;
+
+        let size = self.size.eval_at(time);
+        let x_base = self.bbox.left / self.em as f64 * size;
+        let y_base = size * (1f64 - self.bbox.bottom / self.em as f64); // Change 54 to line height
+
+        ctx.transform(scale, 0f64, 0f64, scale, x + x_base, y + y_base)?;
         for (idx, comp) in self.comps.iter().enumerate() {
             comp.render_to(ctx, time, &self, is_first && idx == 0)?;
         }

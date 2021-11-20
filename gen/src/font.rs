@@ -221,6 +221,7 @@ pub fn parse_char(c: char, face: &ttf_parser::Face) -> anyhow::Result<CharResp> 
                 log::warn!("Glyph \"{}\" has corrupted outline.", c);
                 // Manually craft an bbox
                 let adv = face.glyph_hor_advance(glyph).ok_or_else(|| anyhow::anyhow!("Glyph '{}' has no outline and hor adv", c))?;
+                log::warn!("Advancement {}.", adv);
                 let asc = face.ascender();
                 let dec = face.descender();
                 Rect {

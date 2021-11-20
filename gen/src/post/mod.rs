@@ -115,7 +115,7 @@ pub fn readdir<P: AsRef<Path>>(dir: P, title_font: &ttf_parser::Face) -> anyhow:
                 let filename_match = filename_re
                     .captures(&filename)
                     .ok_or_else(|| anyhow::anyhow!("Unable to parse filename: {}", filename))?;
-                let id = filename_match.get(0).unwrap().as_str();
+                let id = filename_match.get(1).unwrap().as_str();
 
                 let title_outline: anyhow::Result<Vec<_>> = pre.metadata.title
                     .chars()

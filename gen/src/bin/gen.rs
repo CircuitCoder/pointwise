@@ -15,6 +15,10 @@ struct Args {
     /// Output path
     #[structopt(short, long, default_value="out")]
     output: PathBuf,
+
+    /// Output suffix (to deal with webpack json loading)
+    #[structopt(short, long, default_value=".json")]
+    suffix: String,
 }
 
 #[paw::main]
@@ -37,14 +41,14 @@ fn main(args: Args) -> anyhow::Result<()> {
     std::fs::create_dir_all(&args.output)?;
 
     // Write taxonomy
-    let taxonomy_file = std::fs::File::create(args.output.join("taxonomy.json"))?;
+    let taxonomy_file = std::fs::File::create(args.output.join(format!("taxonomy{}", args.suffix)))?;
     serde_json::to_writer(taxonomy_file, &taxonomy)?;
 
     // Write posts
     let posts_base = args.output.join("posts");
     std::fs::create_dir(&posts_base)?;
     for post in posts {
-        let tag_file = std::fs::File::create(posts_base.join(format!("{}.json", post.metadata.id)))?;
+        let tag_file = std::fs::File::create(posts_base.join(format!("{}{}", post.metadata.id, args.suffix)))?;
         serde_json::to_writer(tag_file, &post)?;
     }
 
