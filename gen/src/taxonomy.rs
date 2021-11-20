@@ -9,59 +9,51 @@ use crate::post::Post;
 pub struct Entry<'a> {
     title_outline: &'a [CharResp],
     title: &'a str,
-    url: &'a str,
+    id: &'a str,
     publish_time: &'a chrono::DateTime<chrono::FixedOffset>,
 }
 
-#[derive(Serialize)]
-pub struct Tag<'a> {
-    pub title: &'a str,
-    entries: Vec<Entry<'a>>,
-}
-
 #[derive(Serialize, Clone)]
-pub struct TagBrief<'a> {
+pub struct Tag<'a> {
     title: &'a str,
-    cnt: usize,
-    last_publish: &'a chrono::DateTime<chrono::FixedOffset>,
+    ids: Vec<&'a str>,
 }
 
 #[derive(Serialize)]
 pub struct Taxonomy<'a> {
-    tags: Vec<TagBrief<'a>>,
+    tags: Vec<Tag<'a>>,
+    entries: Vec<Entry<'a>>,
 }
 
-pub fn build_taxonomy<'a>(posts: &'a [Post]) -> (Vec<Tag<'a>>, Taxonomy) {
+pub fn build_taxonomy<'a>(posts: &'a [Post]) -> Taxonomy {
     // Implicit tag index
     let mut buckets = HashMap::new();
-    buckets.insert("index", Vec::new());
+    let mut entries = Vec::new();
 
     for post in posts {
         let entry = Entry {
             title_outline: &post.metadata.title_outline,
             title: &post.metadata.title,
-            url: &post.metadata.url,
+            id: &post.metadata.id,
             publish_time: &post.metadata.publish_time,
         };
 
-        buckets.get_mut("index").unwrap().push(entry.clone());
+        entries.push(entry);
+
         for tag in &post.metadata.tags {
-            buckets.entry(tag).or_insert(Vec::new()).push(entry.clone())
+            buckets.entry(tag).or_insert(Vec::new()).push(post.metadata.id.as_str())
         }
     }
 
     let tags: Vec<_> = buckets.into_iter().map(|(k, v)| Tag {
         title: k,
-        entries: v,
+        ids: v,
     }).collect();
 
     let taxonomy = Taxonomy {
-        tags: tags.iter().map(|t| TagBrief {
-            title: t.title,
-            cnt: t.entries.len(),
-            last_publish: t.entries[0].publish_time,
-        }).collect(),
+        tags,
+        entries,
     };
 
-    (tags, taxonomy)
+    taxonomy
 }

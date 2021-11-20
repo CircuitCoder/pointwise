@@ -20,7 +20,7 @@ type DT = chrono::DateTime<chrono::FixedOffset>;
 
 #[derive(Debug, Serialize)]
 pub struct Metadata {
-    pub url: String,
+    pub id: String,
     pub title: String,
     pub tags: Vec<String>,
     pub publish_time: DT,
@@ -115,7 +115,7 @@ pub fn readdir<P: AsRef<Path>>(dir: P, title_font: &ttf_parser::Face) -> anyhow:
                 let filename_match = filename_re
                     .captures(&filename)
                     .ok_or_else(|| anyhow::anyhow!("Unable to parse filename: {}", filename))?;
-                let url = filename_match.get(0).unwrap().as_str();
+                let id = filename_match.get(0).unwrap().as_str();
 
                 let title_outline: anyhow::Result<Vec<_>> = pre.metadata.title
                     .chars()
@@ -126,7 +126,7 @@ pub fn readdir<P: AsRef<Path>>(dir: P, title_font: &ttf_parser::Face) -> anyhow:
                 Ok(Post {
                     html: pre.html,
                     metadata: Metadata {
-                        url: url.to_owned(),
+                        id: id.to_owned(),
                         title: pre.metadata.title,
                         tags: pre.metadata.tags,
                         publish_time: pre.metadata.force_publish_time.unwrap_or(creation),

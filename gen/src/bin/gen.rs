@@ -31,7 +31,7 @@ fn main(args: Args) -> anyhow::Result<()> {
     log::info!("Loading posts from {}", args.posts.display());
     let posts = pointwise_gen::post::readdir(&args.posts, &font)?;
 
-    let (tags, taxonomy) = pointwise_gen::taxonomy::build_taxonomy(posts.as_slice());
+    let taxonomy = pointwise_gen::taxonomy::build_taxonomy(posts.as_slice());
 
     log::debug!("Writing to: {:#?}", args.output);
     std::fs::create_dir_all(&args.output)?;
@@ -40,19 +40,11 @@ fn main(args: Args) -> anyhow::Result<()> {
     let taxonomy_file = std::fs::File::create(args.output.join("taxonomy.json"))?;
     serde_json::to_writer(taxonomy_file, &taxonomy)?;
 
-    // Write tags
-    let tag_base = args.output.join("lists");
-    std::fs::create_dir(&tag_base)?;
-    for list in tags {
-        let tag_file = std::fs::File::create(tag_base.join(format!("{}.json", list.title)))?;
-        serde_json::to_writer(tag_file, &list)?;
-    }
-
     // Write posts
     let posts_base = args.output.join("posts");
     std::fs::create_dir(&posts_base)?;
     for post in posts {
-        let tag_file = std::fs::File::create(posts_base.join(format!("{}.json", post.metadata.url)))?;
+        let tag_file = std::fs::File::create(posts_base.join(format!("{}.json", post.metadata.id)))?;
         serde_json::to_writer(tag_file, &post)?;
     }
 
