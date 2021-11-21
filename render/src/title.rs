@@ -1,5 +1,5 @@
 use crate::animation::*;
-use pointwise_common::font::{BBox, CharResp, Outline};
+use pointwise_common::font::{BBox, Outline, TitleResp};
 use rand::{distributions::Uniform, prelude::Distribution, Rng};
 use wasm_bindgen::prelude::*;
 use web_sys::{window, CanvasRenderingContext2d};
@@ -115,6 +115,7 @@ impl LayoutedComp {
         time: f64,
         char_layout: &LayoutedChar,
         is_first: bool,
+        em: u16,
     ) -> Result<(), JsValue> {
         // TODO: eval self x y
         ctx.save();
@@ -128,8 +129,8 @@ impl LayoutedComp {
             0f64,
             0f64,
             1f64,
-            dx / char_layout.optical_scale(time),
-            dy / char_layout.optical_scale(time),
+            dx / char_layout.optical_scale(time, em),
+            dy / char_layout.optical_scale(time, em),
         )?;
 
         if is_first {
@@ -165,7 +166,8 @@ struct LayoutedChar {
 
     char: char,
     bbox: BBox,
-    em: usize,
+    bearing: i16,
+    hadv: u16,
 
     dx: CubicBezierTiming,
     dy: CubicBezierTiming,
@@ -174,7 +176,7 @@ struct LayoutedChar {
 }
 
 impl LayoutedChar {
-    pub fn blowup<R: Rng>(&mut self, rng: &mut R, vw: f64, vh: f64, time: f64) {
+    pub fn blowup<R: Rng>(&mut self, rng: &mut R, vw: f64, vh: f64, time: f64, em: u16) {
         for comp in self.comps.iter_mut() {
             comp.blowup(rng, vw, vh, time);
         }
@@ -210,7 +212,7 @@ impl LayoutedChar {
                 func: CUBIC_BEZIER_BLOWUP,
                 from: self.dy.eval_at(time), // TODO: change to eval within update
                 to: blowup_transform_gen.sample(rng)
-                    - self.optical_height(time + BLOWUP_DURATION) / 2f64,
+                    - self.optical_height(time + BLOWUP_DURATION, em) / 2f64,
                 duration: BLOWUP_DURATION,
                 delay: time,
             },
@@ -229,37 +231,56 @@ impl LayoutedChar {
         ctx: &web_sys::CanvasRenderingContext2d,
         time: f64,
         is_first: bool,
-    ) -> Result<(), JsValue> {
+        em: u16,
+    ) -> Result<f64, JsValue> {
         ctx.save();
 
-        let scale = self.optical_scale(time);
+        let scale = self.optical_scale(time, em);
         let x = self.dx.eval_at(time);
         let y = self.dy.eval_at(time);
 
 
         let size = self.size.eval_at(time);
-        let x_base = self.bbox.left / self.em as f64 * size;
-        let y_base = size * (1f64 - self.bbox.bottom / self.em as f64); // Change 54 to line height
+        let x_base = self.bbox.left / em as f64 * size;
+        let y_base = size * (1f64 - self.bbox.bottom / em as f64); // Change 54 to line height
+        // let bearing = self.optical_bearing(time, em);
+        // let x_shift = if is_first { x_base } else { x_base + bearing };
 
-        ctx.transform(scale, 0f64, 0f64, scale, x + x_base, y + y_base)?;
+        ctx.transform(scale, 0f64, 0f64, scale, x + x_base , y + y_base)?;
         for (idx, comp) in self.comps.iter().enumerate() {
-            comp.render_to(ctx, time, &self, is_first && idx == 0)?;
+            comp.render_to(ctx, time, &self, is_first && idx == 0, em)?;
         }
 
         ctx.restore();
-        Ok(())
+
+        let adv = self.optical_hadv(time, em);
+        // let x_adv = if is_first { adv } else { adv + bearing };
+        Ok(adv)
     }
 
-    pub fn optical_scale(&self, time: f64) -> f64 {
-        self.size.eval_at(time) / (self.em as f64)
+    #[inline]
+    pub fn optical_scale(&self, time: f64, em: u16) -> f64 {
+        self.size.eval_at(time) / (em as f64)
     }
 
-    pub fn optical_width(&self, time: f64) -> f64 {
-        self.bbox.width() * self.optical_scale(time)
+    #[inline]
+    pub fn optical_width(&self, time: f64, em: u16) -> f64 {
+        self.bbox.width() * self.optical_scale(time, em)
     }
 
-    pub fn optical_height(&self, time: f64) -> f64 {
-        self.bbox.height() * self.optical_scale(time)
+    #[inline]
+    pub fn optical_height(&self, time: f64, em: u16) -> f64 {
+        self.bbox.height() * self.optical_scale(time, em)
+    }
+
+    #[inline]
+    pub fn optical_bearing(&self, time: f64, em: u16) -> f64 {
+        self.bearing as f64 * self.optical_scale(time, em)
+    }
+
+    #[inline]
+    pub fn optical_hadv(&self, time: f64, em: u16) -> f64 {
+        self.hadv as f64 * self.optical_scale(time, em)
     }
 }
 
@@ -269,15 +290,24 @@ pub struct LayoutedTitle {
 
     dx: CubicBezierTiming,
     dy: CubicBezierTiming,
+
+    em: u16,
+    asc: i16,
+    des: i16,
 }
 
 impl LayoutedTitle {
     pub fn blowup<R: Rng>(&mut self, rng: &mut R, fx: f64, fy: f64, vw: f64, vh: f64, time: f64) {
         let mut total_width = 0f64;
-        for char in &mut self.chars {
-            char.blowup(rng, vw, vh, time);
+        for (idx, char) in self.chars.iter_mut().enumerate() {
+            char.blowup(rng, vw, vh, time, self.em);
 
-            total_width += char.optical_width(time + BLOWUP_DURATION);
+            total_width += char.optical_hadv(time + BLOWUP_DURATION, self.em);
+            /*
+            if idx > 0 { 
+                total_width += char.optical_bearing(time + BLOWUP_DURATION, self.em);
+            }
+            */
         }
 
         let new_x = vw / 2f64 - total_width / 2f64;
@@ -335,10 +365,9 @@ impl LayoutedTitle {
             self.dy.eval_at(time),
         )?;
         for (idx, char) in self.chars.iter().enumerate() {
-            char.render_to(ctx, time, idx == 0)?;
-            let char_width = char.optical_width(time);
-            ctx.transform(1f64, 0f64, 0f64, 1f64, char_width, 0f64)?;
-            total_width += char_width;
+            let char_adv = char.render_to(ctx, time, idx == 0, self.em)?;
+            ctx.transform(1f64, 0f64, 0f64, 1f64, char_adv, 0f64)?;
+            total_width += char_adv;
         }
         ctx.restore();
         Ok(total_width)
@@ -357,9 +386,10 @@ impl ExportedTitle {
         console_error_panic_hook::set_once();
 
         // TODO: use serde-wasm-bindgen
-        let spec: Vec<CharResp> = spec.into_serde().map_err(|_e| JsValue::from_str("Unable to parse input."))?;
+        let spec: TitleResp = spec.into_serde().map_err(|_e| JsValue::from_str("Unable to parse input."))?;
 
         let chars: Vec<_> = spec
+            .chars
             .into_iter()
             .map(|c| -> Result<LayoutedChar, JsValue> {
                 let comps: Vec<_> = c
@@ -379,9 +409,10 @@ impl ExportedTitle {
                     dx: CubicBezierTiming::still(0f64),
                     dy: CubicBezierTiming::still(0f64),
 
-                    em: c.em,
                     bbox: c.bbox,
                     char: c.char,
+                    bearing: c.bearing,
+                    hadv: c.hadv,
                 };
 
                 Ok(c)
@@ -391,9 +422,13 @@ impl ExportedTitle {
         let title = LayoutedTitle {
             chars,
 
-            base_size: FONT_SIZE_LIST, // TODO: update me
+            base_size: FONT_SIZE_LIST, // Used for positioning ascender
             dx: CubicBezierTiming::still(0f64),
             dy: CubicBezierTiming::still(0f64),
+
+            em: spec.em,
+            asc: spec.asc,
+            des: spec.des,
         };
 
         Ok(Self {

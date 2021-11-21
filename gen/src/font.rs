@@ -220,22 +220,21 @@ pub fn parse_char(c: char, face: &ttf_parser::Face) -> anyhow::Result<CharResp> 
             None => {
                 log::warn!("Glyph \"{}\" has corrupted outline.", c);
                 // Manually craft an bbox
-                let adv = face.glyph_hor_advance(glyph).ok_or_else(|| anyhow::anyhow!("Glyph '{}' has no outline and hor adv", c))?;
-                log::warn!("Advancement {}.", adv);
-                let asc = face.ascender();
-                let dec = face.descender();
                 Rect {
                     x_min: 0,
-                    y_min: adv as i16,
-                    x_max: asc,
-                    y_max: dec,
+                    x_max: 0,
+                    y_min: 0,
+                    y_max: 0,
                 }
             }
         };
 
-    let components = split_components(builder.outline);
+    let hadv = face.glyph_hor_advance(glyph).ok_or_else(|| anyhow::anyhow!("Glyph '{}' has no outline and hor adv", c))?;
 
-    Ok(CharResp {
+    let components = split_components(builder.outline);
+    let bearing = face.glyph_hor_side_bearing(glyph).unwrap_or(0);
+
+    let r = Ok(CharResp {
         components,
         char: c,
         bbox: BBox {
@@ -244,6 +243,21 @@ pub fn parse_char(c: char, face: &ttf_parser::Face) -> anyhow::Result<CharResp> 
             left: bbox.x_min as f64,
             right: bbox.x_max as f64,
         },
-        em: face.units_per_em() as usize,
+        bearing,
+        hadv,
+    });
+
+    r
+}
+
+pub fn parse_title(title: &str, face: &ttf_parser::Face) -> anyhow::Result<TitleResp> {
+    let chars: anyhow::Result<Vec<_>> = title.chars().map(|c| parse_char(c, face)).collect();
+    let chars = chars?;
+
+    Ok(TitleResp {
+        chars,
+        em: face.units_per_em(),
+        asc: face.ascender(),
+        des: face.descender(),
     })
 }

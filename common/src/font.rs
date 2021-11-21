@@ -76,5 +76,16 @@ pub struct CharResp {
     pub char: char,
     pub components: Vec<Vec<OutlineCmd>>,
     pub bbox: BBox,
-    pub em: usize,
+    pub bearing: i16,
+    pub hadv: u16,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[cfg_attr(feature = "typings", derive(ts_rs::TS))]
+#[cfg_attr(feature = "typings", ts(export, export_to = "../frontend/src/typings/TitleResp.ts"))]
+pub struct TitleResp {
+    pub chars: Vec<CharResp>,
+    pub asc: i16,
+    pub des: i16,
+    pub em: u16,
 }

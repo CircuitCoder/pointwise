@@ -2,7 +2,7 @@ use std::{collections::HashMap, os::unix::prelude::OsStrExt, path::Path};
 
 use chrono::TimeZone;
 use git2::Sort;
-use pointwise_common::font::CharResp;
+use pointwise_common::font::TitleResp;
 use regex::Regex;
 use serde::Serialize;
 
@@ -25,7 +25,7 @@ pub struct Metadata {
     pub tags: Vec<String>,
     pub publish_time: DT,
     pub update_time: Option<DT>,
-    pub title_outline: Vec<CharResp>,
+    pub title_outline: TitleResp,
 }
 
 pub fn readdir<P: AsRef<Path>>(dir: P, title_font: &ttf_parser::Face) -> anyhow::Result<Vec<Post>> {
@@ -117,11 +117,7 @@ pub fn readdir<P: AsRef<Path>>(dir: P, title_font: &ttf_parser::Face) -> anyhow:
                     .ok_or_else(|| anyhow::anyhow!("Unable to parse filename: {}", filename))?;
                 let id = filename_match.get(1).unwrap().as_str();
 
-                let title_outline: anyhow::Result<Vec<_>> = pre.metadata.title
-                    .chars()
-                    .map(|c| crate::font::parse_char(c, title_font))
-                    .collect();
-                let title_outline = title_outline?;
+                let title_outline: TitleResp = crate::font::parse_title(&pre.metadata.title, title_font)?;
 
                 Ok(Post {
                     html: pre.html,

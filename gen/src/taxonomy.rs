@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use pointwise_common::font::CharResp;
+use pointwise_common::font::TitleResp;
 use serde::Serialize;
 
 use crate::post::Post;
 
 #[derive(Serialize, Clone)]
 pub struct Entry<'a> {
-    title_outline: &'a [CharResp],
+    title_outline: &'a TitleResp,
     title: &'a str,
     id: &'a str,
     publish_time: &'a chrono::DateTime<chrono::FixedOffset>,

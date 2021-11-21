@@ -4,9 +4,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Ctx } from "../App";
 import Title, { TitleInner } from "./Title";
 
+import { TitleResp } from '../typings/TitleResp';
+
 type Props = {
   // TODO: statically typecheck spec
-  spec: any,
+  spec: TitleResp,
 }
 
 const ListEnt = React.memo(({ spec }: Props): ReactElement => {
@@ -20,9 +22,11 @@ const ListEnt = React.memo(({ spec }: Props): ReactElement => {
     if(!inner.current) return;
 
     const loc = inner.current.canvas.getBoundingClientRect();
+    loc.y += spec.asc / spec.em * 42;
+
     global?.titleLayer?.blowup(inner.current.title, loc);
     setHidden(true);
-  }, [global?.titleLayer]);
+  }, [global?.titleLayer, spec]);
 
   const updateInner = useCallback((inst: TitleInner | null) => {
     inner.current = inst;

@@ -1,5 +1,3 @@
-use wasm_bindgen::JsValue;
-
 pub trait Timing {
     fn eval_at(&self, time: f64) -> f64;
     fn update(&mut self, new: Self, now: f64)

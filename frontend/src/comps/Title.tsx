@@ -1,11 +1,12 @@
 import { Title as InnerTitle } from 'pointwise-render';
 import React, { ReactElement, useCallback, useContext, useMemo, useState } from 'react';
 import { Ctx } from '../App';
+import { TitleResp } from '../typings/TitleResp';
 import { useRefValue } from '../utils';
 
 type Props = {
   // TODO: statically typecheck spec
-  spec: any,
+  spec: TitleResp,
   className?: string,
 }
 
@@ -33,16 +34,18 @@ const Title = React.memo(React.forwardRef<TitleInner, Props>(({ spec, className 
 
     const size = canvas.getBoundingClientRect();
     canvas.width = size.width;
-    canvas.height = size.height;
+    canvas.height = size.height + spec.asc / spec.em * 42 + spec.des / spec.em * 42;
 
     const ctx = canvas.getContext('2d');
     if(!ctx) return;
+
+    ctx.transform(1, 0, 0, 1, 0, spec.asc / spec.em * 42);
     let now = performance.now();
     const width = title.render(ctx, now);
     setWidth(width);
 
     setCanvas(canvas);
-  }, [title]);
+  }, [title, spec]);
 
   const inner = useMemo(() => {
     console.log('Update inner', title, canvas);
@@ -55,7 +58,10 @@ const Title = React.memo(React.forwardRef<TitleInner, Props>(({ spec, className 
   useRefValue(ref, inner, [inner]);
 
   return (
-    <canvas ref={setup} className={className}></canvas>
+    <canvas ref={setup} style={{
+      marginTop: -spec.asc / spec.em * 42,
+      marginBottom: -spec.des / spec.em * 42,
+    }} className={className}></canvas>
   );
 }));
 
