@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { RefObject, useEffect, useRef, useState } from 'react';
 
 import React from 'react';
 import TitleLayer, { TitleLayerInterface } from './comps/TitleLayer';
@@ -20,6 +20,7 @@ export enum State {
 export type GlobalCtx = {
   titleLayer: TitleLayerInterface | null,
   render: Awaited<typeof Render>;
+  appRef: RefObject<HTMLDivElement>,
 }
 export const Ctx = React.createContext<GlobalCtx | null>(null);
 
@@ -32,15 +33,17 @@ export default function App(): JSX.Element {
   }, []);
 
   const [titleLayer, setTitleLayer] = useState<TitleLayerInterface | null>(null);
+  const appRef = useRef(null);
 
   if(!render) return <div />
   const ctxInst: GlobalCtx = {
     render,
     titleLayer,
+    appRef,
   }
 
   return (
-    <div className="app">
+    <div className="app" ref={appRef}>
       <Ctx.Provider value={ctxInst}>
         <TitleLayer exp={setTitleLayer} />
 

@@ -54,6 +54,10 @@ const TitleLayer = React.memo(({ exp }: Props): ReactElement => {
           if(s.tag !== StateTag.Idle) return s;
 
           title.blowup(cur.x, cur.y, performance.now());
+          setTimeout(() => {
+            if(global && global.appRef.current)
+              global.appRef.current.scrollTop = 0;
+          }, 2000);
           return { tag: StateTag.Blownup, title };
         });
       },
