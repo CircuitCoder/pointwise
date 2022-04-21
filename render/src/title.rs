@@ -15,7 +15,7 @@ struct LayoutedComp {
 
 const BLOWUP_DURATION: f64 = 1000f64;
 const CONDENSE_DURATION: f64 = 1000f64;
-const CONDENSE_INTERVAL: f64 = 200f64;
+const CONDENSE_INTERVAL_PER_PIXEL: f64 = 2f64;
 const CONDENSE_MOVE_DURATION: f64 = 2000f64;
 const FONT_SIZE_LIST: f64 = 42f64;
 const FONT_SIZE_TITLE: f64 = 54f64;
@@ -331,11 +331,13 @@ impl LayoutedTitle {
     }
 
     pub fn condense(&mut self, time: f64) -> f64 {
-        for (idx, char) in self.chars.iter_mut().enumerate() {
-            char.condense((idx as f64) * CONDENSE_INTERVAL, time);
+        let mut offset = 0f64;
+        for char in self.chars.iter_mut() {
+            char.condense(offset * CONDENSE_INTERVAL_PER_PIXEL, time);
+            offset += char.optical_hadv(f64::INFINITY, self.em)
         }
 
-        let delay = self.chars.len() as f64 * CONDENSE_INTERVAL;
+        let delay = offset * CONDENSE_INTERVAL_PER_PIXEL;
 
         self.dy = CubicBezierTiming {
             func: CUBIC_BEZIER_EASE,
