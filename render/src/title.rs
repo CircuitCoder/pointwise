@@ -134,8 +134,8 @@ impl LayoutedComp {
         )?;
 
         if is_first {
-            ctx.set_fill_style(&JsValue::from_str("red"));
-            ctx.set_stroke_style(&JsValue::from_str("red"));
+            ctx.set_fill_style(&JsValue::from_str("rgb(213, 25, 25)"));
+            ctx.set_stroke_style(&JsValue::from_str("rgb(213, 25, 25)"));
         } else {
             ctx.set_fill_style(&JsValue::from_str("black"));
             ctx.set_stroke_style(&JsValue::from_str("black"));
