@@ -175,21 +175,36 @@ struct LayoutedChar {
     size: CubicBezierTiming,
 }
 
+struct LayoutedCharParams {
+    size: f64,
+    transform: (f64, f64),
+}
+
 impl LayoutedChar {
-    pub fn blowup<R: Rng>(&mut self, rng: &mut R, vw: f64, vh: f64, time: f64, em: u16) {
+    pub fn blowup<R: Rng>(&mut self, rng: &mut R, vw: f64, vh: f64, time: f64, em: u16, keep: Option<LayoutedCharParams>) -> LayoutedCharParams {
         for comp in self.comps.iter_mut() {
             comp.blowup(rng, vw, vh, time);
         }
 
-        // Dy variation = Maximum height variation
-        let blowup_size_gen: Uniform<f64> = Uniform::from((FONT_SIZE_TITLE * 0.9)..(FONT_SIZE_TITLE * 1.1));
-        let blowup_transform_gen: Uniform<f64> = Uniform::from(-3.0..3.0);
+        let params = keep.unwrap_or_else(|| {
+            // Dy variation = Maximum height variation
+            let blowup_size_gen: Uniform<f64> = Uniform::from((FONT_SIZE_TITLE * 0.9)..(FONT_SIZE_TITLE * 1.1));
+            let blowup_transform_gen: Uniform<f64> = Uniform::from(-3.0..3.0);
+
+            LayoutedCharParams {
+                size: blowup_size_gen.sample(rng),
+                transform: (
+                    blowup_transform_gen.sample(rng),
+                    blowup_transform_gen.sample(rng),
+                ),
+            }
+        });
 
         self.size.update(
             CubicBezierTiming {
                 func: CUBIC_BEZIER_BLOWUP,
                 from: self.size.eval_at(time), // TODO: change to eval within update
-                to: blowup_size_gen.sample(rng),
+                to: params.size,
                 duration: BLOWUP_DURATION,
                 delay: time,
             },
@@ -200,7 +215,7 @@ impl LayoutedChar {
             CubicBezierTiming {
                 func: CUBIC_BEZIER_BLOWUP,
                 from: self.dx.eval_at(time), // TODO: change to eval within update
-                to: blowup_transform_gen.sample(rng),
+                to: params.transform.0,
                 duration: BLOWUP_DURATION,
                 delay: time,
             },
@@ -211,13 +226,14 @@ impl LayoutedChar {
             CubicBezierTiming {
                 func: CUBIC_BEZIER_BLOWUP,
                 from: self.dy.eval_at(time), // TODO: change to eval within update
-                to: blowup_transform_gen.sample(rng)
-                    - self.optical_height(time + BLOWUP_DURATION, em) / 2f64,
+                to: params.transform.1,
                 duration: BLOWUP_DURATION,
                 delay: time,
             },
             time,
         );
+
+        params
     }
 
     pub fn condense(&mut self, delay: f64, time: f64) {
@@ -299,8 +315,16 @@ pub struct LayoutedTitle {
 impl LayoutedTitle {
     pub fn blowup<R: Rng>(&mut self, rng: &mut R, fx: f64, fy: f64, vw: f64, vh: f64, time: f64) {
         let mut total_width = 0f64;
+        let mut keep = None;
+        let mut last_alphanumeric = false;
         for (idx, char) in self.chars.iter_mut().enumerate() {
-            char.blowup(rng, vw, vh, time, self.em);
+            let cur_alphanumeric = char.char.is_ascii_alphanumeric();
+            if !cur_alphanumeric {
+                char.blowup(rng, vw, vh, time, self.em, None);
+                keep = None;
+            } else {
+                keep = Some(char.blowup(rng, vw, vh, time, self.em, keep));
+            }
 
             total_width += char.optical_hadv(time + BLOWUP_DURATION, self.em);
             /*
