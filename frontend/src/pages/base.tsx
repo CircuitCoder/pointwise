@@ -34,7 +34,7 @@ const Base = React.memo((): ReactElement => {
         )}
         {postMatch && (
           <CSSTransition key={`post-${postMatch.params.id}`} timeout={750} classNames="pages">
-            <Post />
+            <Post id={postMatch.params.id ?? ''} />
           </CSSTransition>
         )}
       </TransitionGroup>

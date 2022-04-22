@@ -14,7 +14,7 @@ const List = React.memo((): ReactElement => {
 
   return (
     <div className="page list">
-      {list.map((ent: any) => (<ListEnt spec={ent.title_outline} />))}
+      {list.map((ent: any) => (<ListEnt spec={ent.title_outline} id={ent.id} />))}
     </div>
   );
 });

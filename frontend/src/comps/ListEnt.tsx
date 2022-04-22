@@ -9,9 +9,10 @@ import { TitleResp } from '../typings/TitleResp';
 type Props = {
   // TODO: statically typecheck spec
   spec: TitleResp,
+  id: string,
 }
 
-const ListEnt = React.memo(({ spec }: Props): ReactElement => {
+const ListEnt = React.memo(({ spec, id }: Props): ReactElement => {
   const inner = useRef<TitleInner | null>(null);
   const [barWidth, setBarWidth] = useState(0);
   const [hidden, setHidden] = useState(false);
@@ -35,7 +36,7 @@ const ListEnt = React.memo(({ spec }: Props): ReactElement => {
 
   const navigate = useNavigate();
   useEffect(() => {
-    if(hidden) navigate('/post/test');
+    if(hidden) navigate(`/post/${id}`);
   }, [hidden, navigate]);
 
   return (
