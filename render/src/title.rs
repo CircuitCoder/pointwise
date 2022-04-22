@@ -1,3 +1,5 @@
+use std::ops::{RangeTo, Range};
+
 use crate::animation::*;
 use pointwise_common::font::{BBox, Outline, TitleResp};
 use rand::{distributions::Uniform, prelude::Distribution, Rng};
@@ -19,6 +21,8 @@ const CONDENSE_INTERVAL_PER_PIXEL: f64 = 2f64;
 const CONDENSE_MOVE_DURATION: f64 = 2000f64;
 const FONT_SIZE_LIST: f64 = 42f64;
 const FONT_SIZE_TITLE: f64 = 54f64;
+const BLOWUP_SCALE_VARIANCE: Range<f64> = 0.9f64..1.2f64;
+const BLOWUP_TRANSFORM_VARIANCE: Range<f64> = -3f64..3f64;
 
 const CUBIC_BEZIER_EASE: CubicBezierFunc = CubicBezierFunc {
     x1: 0.25,
@@ -188,8 +192,8 @@ impl LayoutedChar {
 
         let params = keep.unwrap_or_else(|| {
             // Dy variation = Maximum height variation
-            let blowup_size_gen: Uniform<f64> = Uniform::from((FONT_SIZE_TITLE * 0.9)..(FONT_SIZE_TITLE * 1.1));
-            let blowup_transform_gen: Uniform<f64> = Uniform::from(-3.0..3.0);
+            let blowup_size_gen: Uniform<f64> = Uniform::from((BLOWUP_SCALE_VARIANCE.start * FONT_SIZE_TITLE)..(BLOWUP_SCALE_VARIANCE.end * FONT_SIZE_TITLE));
+            let blowup_transform_gen: Uniform<f64> = Uniform::from(BLOWUP_TRANSFORM_VARIANCE);
 
             LayoutedCharParams {
                 size: blowup_size_gen.sample(rng),
